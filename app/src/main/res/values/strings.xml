@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">trustie</string>
+    <string name="home_title">Trang chủ</string>
+    <string name="call_history">Lịch sử cuộc gọi</string>
+    <string name="phone_alert">Cảnh báo SĐT</string>
+    <string name="check_phone">Kiểm tra SĐT</string>
+    <string name="check_web">Kiểm tra web</string>
+    <string name="connect_relatives">Kết nối với người thân</string>
+</resources>
