@@ -3,6 +3,7 @@ package com.example.trustie.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -34,16 +35,16 @@ fun FeatureCard(
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Icon(
                 imageVector = feature.icon,
                 contentDescription = feature.title,
                 tint = feature.iconColor,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(85.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = feature.title,
@@ -51,7 +52,8 @@ fun FeatureCard(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                lineHeight = 20.sp
+                lineHeight = 25.sp,
+//                lineLength = 30.sp
             )
         }
     }

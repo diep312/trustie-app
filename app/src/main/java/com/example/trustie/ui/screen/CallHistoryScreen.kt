@@ -82,7 +82,7 @@ fun CallHistoryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = Color(0xFF2196F3) // Màu xanh dương
+                        color = Color(0xFF2196F3)
                     )
                 }
             }

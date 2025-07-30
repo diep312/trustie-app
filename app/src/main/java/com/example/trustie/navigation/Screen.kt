@@ -7,4 +7,5 @@ sealed class Screen(val route: String) {
     object CheckPhone : Screen("check_phone")
     object CheckWeb : Screen("check_web")
     object ConnectRelatives : Screen("connect_relatives")
+
 }

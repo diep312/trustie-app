@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import com.example.trustie.ui.screen.CallHistoryScreen
 import com.example.trustie.ui.screen.HomeScreen
 import androidx.compose.material3.Text
+import com.example.trustie.ui.screen.CheckPhoneScreen
+import com.example.trustie.ui.screen.ConnectRelativesScreen
 
 @Composable
 fun AppNavigation(
@@ -40,7 +42,7 @@ fun AppNavigation(
                         "Kiểm tra web" -> {
                             navController.navigate(Screen.CheckWeb.route)
                         }
-                        "Kết nối với\nnguời thân" -> {
+                        "Kết nối với người thân" -> {
                             navController.navigate(Screen.ConnectRelatives.route)
                         }
                     }
@@ -51,15 +53,25 @@ fun AppNavigation(
         composable(Screen.CallHistory.route) {
             CallHistoryScreen(
                 onBackClick = {
-                    navController.popBackStack() // <-- Truyền lambda để quay lại
+                    navController.popBackStack()
                 }
             )
         }
-
-        // Các màn hình placeholder khác
+        composable(Screen.CheckPhone.route) { // <-- Thêm composable cho CheckPhoneScreen
+            CheckPhoneScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Screen.ConnectRelatives.route) { // <-- Thêm composable cho ConnectRelativesScreen
+            ConnectRelativesScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
         composable(Screen.PhoneAlert.route) { Text("Màn hình Cảnh báo SĐT") }
-        composable(Screen.CheckPhone.route) { Text("Màn hình Kiểm tra SĐT") }
         composable(Screen.CheckWeb.route) { Text("Màn hình Kiểm tra web") }
-        composable(Screen.ConnectRelatives.route) { Text("Màn hình Kết nối với người thân") }
     }
 }

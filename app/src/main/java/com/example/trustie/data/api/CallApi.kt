@@ -4,6 +4,6 @@ import com.example.trustie.ui.model.CallHistoryResponse
 import retrofit2.http.GET
 
 interface CallApi {
-    @GET("call-history") // Thay thế bằng endpoint API thực tế của bạn
+    @GET("call-history")
     suspend fun getCallHistory(): CallHistoryResponse
 }

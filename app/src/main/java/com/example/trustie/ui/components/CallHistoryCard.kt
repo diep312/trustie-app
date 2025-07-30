@@ -23,9 +23,9 @@ fun CallHistoryCard(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (callItem.isSuspicious) {
-        Color(0xFFF44336) // Red for suspicious calls
+        Color(0xFFF44336)
     } else {
-        Color(0xFF8BC34A) // Green for normal calls
+        Color(0xFF63B404)
     }
 
     val displayName = if (callItem.isSuspicious) {
