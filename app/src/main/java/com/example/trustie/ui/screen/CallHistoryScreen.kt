@@ -53,8 +53,8 @@ fun CallHistoryScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Lịch sử cuộc gọi",
-                    fontSize = 30.sp,
+                    text = "  Lịch sử cuộc gọi",
+                    fontSize = 35.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
@@ -64,6 +64,7 @@ fun CallHistoryScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
+                        modifier = Modifier.size(40.dp),
                         tint = Color.Black
                     )
                 }
@@ -158,6 +159,14 @@ fun CallHistoryScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CallHistoryPreview() {
+    TrustieTheme {
+        CallHistoryScreen(onBackClick = {})
     }
 }
 
