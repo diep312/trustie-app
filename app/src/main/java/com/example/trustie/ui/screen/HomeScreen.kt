@@ -45,7 +45,7 @@ fun HomeScreen(
         FeatureItem(
             title = "Kiểm tra SĐT",
             icon = Icons.Default.PhoneAndroid,
-            backgroundColor = Color(0xFF8BC34A),
+            backgroundColor = Color(0xFF63B404),
             iconColor = Color.White,
             textColor = Color.White
         ),
@@ -57,9 +57,9 @@ fun HomeScreen(
             textColor = Color.White
         ),
         FeatureItem(
-            title = "Kết nối với nguời thân",
-            icon = Icons.Default.Person,
-            backgroundColor = Color(0xFF3F51B5),
+            title = "Kết nối với người thân",
+            icon = Icons.Default.People,
+            backgroundColor = Color(0xFF5524A2),
             iconColor = Color.White,
             textColor = Color.White
         )
@@ -81,7 +81,7 @@ fun HomeScreen(
         ) {
             Text(
                 text = "Trang chủ",
-                fontSize = 28.sp,
+                fontSize = 35.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
@@ -93,7 +93,7 @@ fun HomeScreen(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
                     tint = Color.Black,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(35.dp)
                 )
             }
         }
@@ -103,8 +103,8 @@ fun HomeScreen(
         // Feature Grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             items(features.take(4)) { feature ->
@@ -130,7 +130,7 @@ fun HomeScreen(
                 onClick = { onFeatureClick(feature) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(180.dp)
             )
         }
     }
