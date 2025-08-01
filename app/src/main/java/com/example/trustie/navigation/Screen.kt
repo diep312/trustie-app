@@ -1,11 +1,18 @@
 package com.example.trustie.navigation
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
+    object PhoneInput : Screen("phone_input")
+    object OTPInput : Screen("otp_input")
     object Home : Screen("home")
     object CallHistory : Screen("call_history")
-    object PhoneAlert : Screen("phone_alert")
+    object ReportPhone : Screen("report_phone")
     object CheckPhone : Screen("check_phone")
-    object CheckWeb : Screen("check_web")
+    object CheckImage : Screen("check_image")
     object ConnectRelatives : Screen("connect_relatives")
+    object Notifications : Screen("notifications")
+    object IncomingCallAlert : Screen("incoming_call_alert/{phoneNumber}/{isSuspicious}") {
+        fun createRoute(phoneNumber: String, isSuspicious: Boolean) = "incoming_call_alert/$phoneNumber/$isSuspicious"
+    }
 
 }

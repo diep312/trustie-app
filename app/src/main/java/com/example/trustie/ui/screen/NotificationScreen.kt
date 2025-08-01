@@ -1,8 +1,5 @@
-
-
 package com.example.trustie.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,46 +18,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.trustie.R
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.trustie.ui.components.CallHistoryCard
+import com.example.trustie.R
+import com.example.trustie.ui.components.NotificationCard
 import com.example.trustie.ui.theme.TrustieTheme
-import com.example.trustie.ui.viewmodel.CallHistoryViewModel
+import com.example.trustie.ui.viewmodel.NotificationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CallHistoryScreen(
+fun NotificationScreen(
     onBackClick: () -> Unit,
-    viewModel: CallHistoryViewModel = viewModel()
+    viewModel: NotificationViewModel = viewModel()
 ) {
-    val callHistory by viewModel.callHistory.collectAsState()
+    val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-
-    LaunchedEffect(Unit) {
-        Log.d("CallHistoryDebug", "CallHistoryScreen LaunchedEffect triggered")
-        viewModel.loadCallHistory()
-    }
-
-
-    DisposableEffect(callHistory, isLoading, errorMessage) {
-        Log.d("CallHistoryDebug", "CallHistoryScreen recomposed. isLoading: $isLoading, errorMessage: $errorMessage, callHistory size: ${callHistory.size}")
-        onDispose { /* cleanup if needed */ }
-    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFDF2E9))
     ) {
-
+        // Header
         TopAppBar(
             title = {
                 Text(
-                    text = "LỊCH SỬ",
-                    fontSize = 40.sp,
+                    text = "THÔNG BÁO",
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF208EE1),
+                    color = Color(0xFF2196F3)
                 )
             },
             navigationIcon = {
@@ -84,7 +70,6 @@ fun CallHistoryScreen(
 
         when {
             isLoading -> {
-                Log.d("CallHistoryDebug", "Displaying loading indicator.")
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -96,7 +81,6 @@ fun CallHistoryScreen(
             }
 
             errorMessage != null -> {
-                Log.d("CallHistoryDebug", "Displaying error message: $errorMessage")
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -108,21 +92,21 @@ fun CallHistoryScreen(
                     ) {
                         Text(
                             text = "Có lỗi xảy ra!",
-                            fontSize = 20.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFD32F2F),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
                             text = errorMessage ?: "Không thể tải dữ liệu. Vui lòng thử lại.",
-                            fontSize = 16.sp,
+                            fontSize = 24.sp,
                             color = Color.Black.copy(alpha = 0.7f),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { viewModel.loadCallHistory() },
+                            onClick = { viewModel.refreshNotifications() },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF2196F3)
                             )
@@ -133,36 +117,26 @@ fun CallHistoryScreen(
                 }
             }
 
-            callHistory.isEmpty() -> {
-                Log.d("CallHistoryDebug", "Call history is empty. Displaying empty message.")
+            notifications.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Không có dữ liệu lịch sử cuộc gọi.",
-                        fontSize = 18.sp,
+                        text = "Không có thông báo nào.",
+                        fontSize = 24.sp,
                         color = Color.Gray
                     )
                 }
             }
 
             else -> {
-                Log.d("CallHistoryDebug", "Displaying call history list. Size: ${callHistory.size}")
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
-                    items(callHistory) { call ->
-                        CallHistoryCard(
-                            callItem = call,
-                            onCallClick = { phoneNumber ->
-                                viewModel.makeCall(phoneNumber)
-                            }
-                        )
+                    items(notifications) { notification ->
+                        NotificationCard(notification = notification)
                     }
                 }
             }
@@ -172,10 +146,8 @@ fun CallHistoryScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun CallHistoryPreview() {
+fun NotificationScreenPreview() {
     TrustieTheme {
-        CallHistoryScreen(onBackClick = {})
+        NotificationScreen(onBackClick = {})
     }
 }
-
-

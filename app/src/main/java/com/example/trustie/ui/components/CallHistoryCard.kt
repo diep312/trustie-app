@@ -1,5 +1,6 @@
 package com.example.trustie.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,55 +23,53 @@ fun CallHistoryCard(
     onCallClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (callItem.isSuspicious) {
-        Color(0xFFF44336)
-    } else {
-        Color(0xFF63B404)
-    }
 
     val displayName = if (callItem.isSuspicious) {
         "Khả nghi lừa đảo"
     } else {
         callItem.contactName
     }
+    val borderColor = if (callItem.isSuspicious) Color(0xFFF44336) else Color(0xFF4CAF50)
+    val cardBackgroundColor = Color.White
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
-    ) {
+            .border(6.dp, borderColor, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+    ){
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header row with name and phone number
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = displayName,
-                    color = Color.White,
-                    fontSize = 24.sp,
+                    text = if (callItem.isSuspicious) "Khả nghi lừa đảo" else callItem.contactName,
+                    color = Color.Black,
+                    fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-
                 Text(
                     text = callItem.phoneNumber,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.Black,
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Time and country row
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -78,40 +77,28 @@ fun CallHistoryCard(
             ) {
                 Text(
                     text = callItem.time,
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.Gray,
                     fontSize = 16.sp
                 )
-
                 Text(
                     text = callItem.country,
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.Gray,
                     fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Call action row
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCallClick(callItem.phoneNumber) },
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Phone,
-                    contentDescription = "Call",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
                     text = callItem.callType,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.Gray,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal
                 )
             }
         }

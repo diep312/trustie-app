@@ -8,5 +8,6 @@ data class FeatureItem(
     val icon: ImageVector,
     val backgroundColor: Color,
     val iconColor: Color,
-    val textColor: Color
+    val textColor: Color,
+    val onClick: () -> Unit = {}
 )

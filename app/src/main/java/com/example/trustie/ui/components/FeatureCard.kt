@@ -35,7 +35,7 @@ fun FeatureCard(
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = feature.icon,
@@ -53,7 +53,6 @@ fun FeatureCard(
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 lineHeight = 25.sp,
-//                lineLength = 30.sp
             )
         }
     }
