@@ -6,11 +6,9 @@ package com.example.trustie.ui.screen
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Dialpad
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
@@ -29,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.ui.theme.TrustieTheme
 import com.example.trustie.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
@@ -38,22 +37,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun PhoneInputScreen(
     onNavigateToOTP: () -> Unit,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val phoneNumber by viewModel.phoneNumber.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val successMessage by viewModel.successMessage.collectAsState()
-    val otpSent by viewModel.otpSent.collectAsState()
+    val authState by viewModel.authState.collectAsState()
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val scope = rememberCoroutineScope() // <-- Lấy CoroutineScope
+    val scope = rememberCoroutineScope()
 
     Log.d("PhoneInputScreen", "PhoneInputScreen recomposed")
 
-    LaunchedEffect(otpSent) {
-        if (otpSent) {
+    LaunchedEffect(authState.isOtpSent) {
+        if (authState.isOtpSent) {
             onNavigateToOTP()
         }
     }
@@ -67,7 +63,6 @@ fun PhoneInputScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(48.dp))
-
         Text(
             text = "Xin vui lòng nhập\nsố điện thoại",
             fontSize = 35.sp,
@@ -76,9 +71,7 @@ fun PhoneInputScreen(
             textAlign = TextAlign.Center,
             lineHeight = 32.sp
         )
-
         Spacer(modifier = Modifier.height(80.dp))
-
         Text(
             text = "Số điện thoại",
             fontSize = 25.sp,
@@ -86,12 +79,10 @@ fun PhoneInputScreen(
             color = Color.Gray,
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = phoneNumber,
-            onValueChange = { viewModel.updatePhoneNumber(it) },
+            onValueChange = { viewModel.setPhoneNumber(it) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(90.dp)
@@ -116,12 +107,9 @@ fun PhoneInputScreen(
                 unfocusedTextColor = Color.Black
             ),
         )
-
         Spacer(modifier = Modifier.height(32.dp))
-
-
         Button(
-            onClick = { viewModel.sendOTP() },
+            onClick = { viewModel.sendOtp() },
             modifier = Modifier
                 .widthIn(min = 200.dp)
                 .height(80.dp),
@@ -129,9 +117,9 @@ fun PhoneInputScreen(
                 containerColor = Color(0xFF2196F3)
             ),
             shape = RoundedCornerShape(12.dp),
-            enabled = !isLoading && phoneNumber.isNotEmpty()
+            enabled = !authState.isLoading && phoneNumber.isNotEmpty()
         ) {
-            if (isLoading) {
+            if (authState.isLoading) {
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -146,7 +134,6 @@ fun PhoneInputScreen(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(32.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -191,8 +178,6 @@ fun PhoneInputScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
-
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -230,11 +215,8 @@ fun PhoneInputScreen(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(32.dp))
-
-        // Error/Success messages
-        errorMessage?.let { message ->
+        authState.errorMessage?.let { message ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
@@ -248,8 +230,7 @@ fun PhoneInputScreen(
                 )
             }
         }
-
-        successMessage?.let { message ->
+        authState.successMessage?.let { message ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
@@ -266,5 +247,13 @@ fun PhoneInputScreen(
     }
 }
 
-
+@Preview(showBackground = true)
+@Composable
+fun PhoneInputScreenPreview() {
+    TrustieTheme {
+        PhoneInputScreen(
+            onNavigateToOTP = {},
+        )
+    }
+}
 

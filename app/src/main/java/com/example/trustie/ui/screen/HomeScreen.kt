@@ -141,17 +141,6 @@ fun HomeScreen(
                     .heightIn(max = 80.dp)
                     .padding(8.dp)
             )
-//            IconButton(
-//                onClick = onNotificationClick
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Notifications,
-//                    contentDescription = "Thông báo",
-//                    tint = Color(0xFF2196F3),
-//                    modifier = Modifier
-//                            .size(500.dp),
-//                )
-//            }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -243,10 +232,10 @@ fun HomeScreen(
                         }
 
                         Image(
-                            painter = painterResource(id = R.drawable.ex_image),
+                            painter = painterResource(id = R.drawable.ex_image1),
                             contentDescription = "Hình minh họa",
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(200.dp)
+                            modifier = Modifier.size(260.dp)
                         )
                     }
                 }
@@ -288,24 +277,24 @@ fun HomeScreen(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-//
-//        Button(
-//            onClick = onLogoutClick,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(56.dp),
-//            colors = ButtonDefaults.buttonColors(
-//                containerColor = Color(0xFFD32F2F)
-//            ),
-//            shape = MaterialTheme.shapes.medium
-//        ) {
-//            Text(
-//                text = "Đăng xuất",
-//                fontSize = 18.sp,
-//                fontWeight = FontWeight.Bold,
-//                color = Color.White
-//            )
-//        }
+
+        Button(
+            onClick = onLogoutClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD32F2F)
+            ),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = "Đăng xuất",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }
 

@@ -6,7 +6,7 @@ data class LoginRequest(
 
 data class OTPRequest(
     val phoneNumber: String,
-    val otpCode: String
+    val otp: String
 )
 
 data class AuthResponse(

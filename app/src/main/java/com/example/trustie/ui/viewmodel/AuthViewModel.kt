@@ -1,27 +1,36 @@
+
+
 package com.example.trustie.ui.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trustie.data.repository.AuthRepository
+import com.example.trustie.domain.repository.AuthRepository
 import com.example.trustie.ui.model.User
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AuthViewModel(
-    private val context: Context
+data class AuthState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null,
+    val isAuthenticated: Boolean = false,
+    val isOtpSent: Boolean = false,
+    val currentUser: User? = null
+)
+
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val repository = AuthRepository(context)
-
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
-
-    private val _isLoggedIn = MutableStateFlow(false)
-    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+    private val _authState = MutableStateFlow(AuthState())
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     private val _phoneNumber = MutableStateFlow("")
     val phoneNumber: StateFlow<String> = _phoneNumber.asStateFlow()
@@ -29,116 +38,137 @@ class AuthViewModel(
     private val _otpCode = MutableStateFlow("")
     val otpCode: StateFlow<String> = _otpCode.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    private val _successMessage = MutableStateFlow<String?>(null)
-    val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
-
-    private val _otpSent = MutableStateFlow(false)
-    val otpSent: StateFlow<Boolean> = _otpSent.asStateFlow()
-
     init {
-        Log.d("AuthDebug", "AuthViewModel initialized")
+        Log.d("AuthViewModel", "AuthViewModel initialized")
         checkLoginStatus()
     }
 
     private fun checkLoginStatus() {
-        _isLoggedIn.value = repository.isLoggedIn()
-        _currentUser.value = repository.getCurrentUser()
-        Log.d("AuthDebug", "Login status checked: ${_isLoggedIn.value}")
+        _authState.value = _authState.value.copy(
+            isAuthenticated = authRepository.isLoggedIn(),
+            currentUser = authRepository.getCurrentUser()
+        )
+        Log.d("AuthViewModel", "Initial login status: ${_authState.value.isAuthenticated}")
     }
 
-    fun updatePhoneNumber(phone: String) {
-        _phoneNumber.value = phone
-        Log.d("AuthDebug", "Phone number updated: $phone")
+    fun setPhoneNumber(number: String) {
+        _phoneNumber.value = number
+        _authState.value = _authState.value.copy(errorMessage = null, successMessage = null, isOtpSent = false)
+        Log.d("AuthViewModel", "Phone number updated: $number")
     }
 
-    fun updateOTPCode(otp: String) {
-        if (otp.length <= 4) { // Giới hạn 4 ký tự
-            _otpCode.value = otp
-            Log.d("AuthDebug", "OTP code updated: $otp")
+    fun setOtpCode(code: String) {
+        if (code.length <= 6) {
+            _otpCode.value = code
+            _authState.value = _authState.value.copy(errorMessage = null, successMessage = null)
+            Log.d("AuthViewModel", "OTP code updated: $code")
         }
     }
 
-    fun sendOTP() {
+    fun setOtpSentStatus(status: Boolean) {
+        _authState.value = _authState.value.copy(isOtpSent = status)
+        Log.d("AuthViewModel", "OTP sent status set to: $status")
+    }
+
+    fun setErrorMessage(message: String?) {
+        _authState.value = _authState.value.copy(errorMessage = message)
+        Log.d("AuthViewModel", "Error message set: $message")
+    }
+
+    fun sendOtp() {
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            _successMessage.value = null
+            _authState.value = _authState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null,
+                isOtpSent = false
+            )
+            Log.d("AuthViewModel", "Sending OTP for: ${_phoneNumber.value}")
 
+            delay(1000)
+            _authState.value = _authState.value.copy(
+                isLoading = false,
+                isOtpSent = true,
+                successMessage = "Mã OTP đã được gửi thành công (test mode)"
+            )
+            Log.d("AuthViewModel", "OTP sent successfully (test mode) for: ${_phoneNumber.value}")
+
+            /*
+            // PHẦN CODE GỐC ĐỂ GỌI API THỰC TẾ
             try {
-                Log.d("AuthDebug", "Sending OTP...")
-                val response = repository.sendOTP(_phoneNumber.value)
-
+                val response = authRepository.sendOTP(_phoneNumber.value)
                 if (response.success) {
-                    _otpSent.value = true
-                    _successMessage.value = response.message
-                    Log.d("AuthDebug", "OTP sent successfully")
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        isOtpSent = true,
+                        successMessage = response.message
+                    )
+                    Log.d("AuthViewModel", "OTP sent successfully for: ${_phoneNumber.value}")
                 } else {
-                    _errorMessage.value = response.message ?: "Không thể gửi mã OTP"
-                    Log.e("AuthDebug", "Failed to send OTP: ${response.message}")
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        errorMessage = response.message ?: "Không thể gửi mã OTP",
+                        isOtpSent = false
+                    )
+                    Log.e("AuthViewModel", "Failed to send OTP for: ${_phoneNumber.value}: ${response.message}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Lỗi kết nối: ${e.message}"
-                Log.e("AuthDebug", "Exception sending OTP: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
+                _authState.value = _authState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Lỗi kết nối khi gửi OTP: ${e.message}",
+                    isOtpSent = false
+                )
+                Log.e("AuthViewModel", "Exception sending OTP: ${e.message}", e)
             }
+            */
         }
     }
 
-    fun verifyOTP() {
+    fun verifyOtp() {
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            _successMessage.value = null
-
+            _authState.value = _authState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null
+            )
+            Log.d("AuthViewModel", "Verifying OTP: ${_otpCode.value} for phone: ${_phoneNumber.value}")
             try {
-                Log.d("AuthDebug", "Verifying OTP...")
-                val response = repository.verifyOTP(_phoneNumber.value, _otpCode.value)
-
+                val response = authRepository.verifyOTP(_phoneNumber.value, _otpCode.value)
                 if (response.success && response.user != null) {
-                    _currentUser.value = response.user
-                    _isLoggedIn.value = true
-                    _successMessage.value = response.message
-                    Log.d("AuthDebug", "OTP verified successfully")
+                    authRepository.saveUserSession(response.user, response.token ?: "")
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        isAuthenticated = true,
+                        isOtpSent = true,
+                        currentUser = response.user,
+                        successMessage = response.message
+                    )
+                    Log.d("AuthViewModel", "OTP verified. User authenticated.")
                 } else {
-                    _errorMessage.value = response.message ?: "Mã OTP không chính xác"
-                    Log.e("AuthDebug", "Failed to verify OTP: ${response.message}")
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        errorMessage = response.message ?: "Mã OTP không chính xác"
+                    )
+                    Log.e("AuthViewModel", "OTP verification failed for: ${_otpCode.value}: ${response.message}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Lỗi kết nối: ${e.message}"
-                Log.e("AuthDebug", "Exception verifying OTP: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
+                _authState.value = _authState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Lỗi kết nối khi xác thực OTP: ${e.message}"
+                )
+                Log.e("AuthViewModel", "Exception verifying OTP: ${e.message}", e)
             }
         }
     }
 
     fun logout() {
-        repository.logout()
-        _currentUser.value = null
-        _isLoggedIn.value = false
-        _phoneNumber.value = ""
-        _otpCode.value = ""
-        _otpSent.value = false
-        clearMessages()
-        Log.d("AuthDebug", "User logged out")
-    }
-
-    fun clearMessages() {
-        _errorMessage.value = null
-        _successMessage.value = null
-    }
-
-    fun resetOTPFlow() {
-        _otpCode.value = ""
-        _otpSent.value = false
-        clearMessages()
-        Log.d("AuthDebug", "OTP flow reset")
+        viewModelScope.launch {
+            authRepository.logout()
+            _authState.value = AuthState()
+            _phoneNumber.value = ""
+            _otpCode.value = ""
+            Log.d("AuthViewModel", "User logged out.")
+        }
     }
 }
+

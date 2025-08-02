@@ -3,27 +3,13 @@ package com.example.trustie.data.api
 import com.example.trustie.ui.model.AuthResponse
 import com.example.trustie.ui.model.LoginRequest
 import com.example.trustie.ui.model.OTPRequest
-import kotlinx.coroutines.delay
+import retrofit2.http.Body
+import retrofit2.http.POST
 
-class AuthApiService {
-    // Base URL for your backend API
-    private val baseUrl = "https://your-api-domain.com/api/"
+interface AuthApiService {
+    @POST("api/v1/auth/send-otp")
+    suspend fun sendOtp(@Body request: LoginRequest): AuthResponse
 
-    suspend fun sendOTP(request: LoginRequest): AuthResponse {
-        // Simulate API call
-        delay(1500)
-        throw NotImplementedError("Implement actual API call here")
-    }
-
-    suspend fun verifyOTP(request: OTPRequest): AuthResponse {
-        // Simulate API call
-        delay(1500)
-        throw NotImplementedError("Implement actual API call here")
-    }
-
-    suspend fun refreshToken(token: String): AuthResponse {
-        // Simulate API call
-        delay(1000)
-        throw NotImplementedError("Implement actual API call here")
-    }
+    @POST("api/v1/auth/verify-otp")
+    suspend fun verifyOtp(@Body request: OTPRequest): AuthResponse
 }

@@ -1,5 +1,4 @@
 
-
 package com.example.trustie.ui.screen
 
 import android.util.Log
@@ -23,32 +22,36 @@ import androidx.compose.ui.res.painterResource // Import for painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel // Import hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.viewmodel.AuthViewModel
 import com.example.trustie.ui.components.OTPDigitField
+import com.example.trustie.ui.theme.TrustieTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OTPInputScreen(
     onNavigateToHome: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val otpCode by viewModel.otpCode.collectAsState()
-    val phoneNumber by viewModel.phoneNumber.collectAsState() // Giữ lại phoneNumber nếu cần, dù không hiển thị
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val successMessage by viewModel.successMessage.collectAsState()
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val authState by viewModel.authState.collectAsState()
 
-    val focusRequesters = remember { List(4) { FocusRequester() } }
+
+    val isAuthenticated = authState.isAuthenticated
+
+
+    val otpDigitCount = 4
+    val focusRequesters = remember { List(otpDigitCount) { FocusRequester() } }
 
     Log.d("OTPInputScreen", "OTPInputScreen recomposed")
 
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
+    LaunchedEffect(isAuthenticated) {
+        if (isAuthenticated) {
             onNavigateToHome()
         }
     }
@@ -74,7 +77,7 @@ fun OTPInputScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {},
+                        onClick = onNavigateBack,
                         modifier = Modifier.size(60.dp)
                     ) {
                         Image(
@@ -103,7 +106,6 @@ fun OTPInputScreen(
             verticalArrangement = Arrangement.Top
         ) {
             Spacer(modifier = Modifier.height(32.dp))
-
             Text(
                 text = "Mã OTP đã được gửi\ntới quý khách",
                 fontSize = 30.sp,
@@ -112,23 +114,19 @@ fun OTPInputScreen(
                 textAlign = TextAlign.Center,
                 lineHeight = 32.sp
             )
-
             Spacer(modifier = Modifier.height(48.dp))
-
             Text(
                 text = "Mã OTP",
                 fontSize = 16.sp,
                 color = Color.Gray,
                 modifier = Modifier.fillMaxWidth()
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
             ) {
-                repeat(4) { index ->
+                repeat(otpDigitCount) { index ->
                     val currentDigit = otpCode.getOrNull(index)?.toString() ?: ""
                     OTPDigitField(
                         digit = currentDigit,
@@ -137,19 +135,19 @@ fun OTPInputScreen(
                             while (currentOtpChars.size <= index) {
                                 currentOtpChars.add(' ')
                             }
+
                             if (newDigit.isNotEmpty()) {
                                 currentOtpChars[index] = newDigit.first()
-                                viewModel.updateOTPCode(currentOtpChars.joinToString("").replace(" ", "").trim())
-
-                                if (index < 3) {
+                                viewModel.setOtpCode(currentOtpChars.joinToString("").replace(" ", "").trim()) // Gọi setOtpCode
+                                if (index < otpDigitCount - 1) {
                                     focusRequesters[index + 1].requestFocus()
                                 }
                             } else {
+                                // Xử lý khi xóa ký tự
                                 if (currentOtpChars[index] != ' ') {
                                     currentOtpChars[index] = ' '
-                                    viewModel.updateOTPCode(currentOtpChars.joinToString("").replace(" ", "").trim())
+                                    viewModel.setOtpCode(currentOtpChars.joinToString("").replace(" ", "").trim()) // Gọi setOtpCode
                                 }
-
                                 if (index > 0) {
                                     focusRequesters[index - 1].requestFocus()
                                 }
@@ -159,14 +157,11 @@ fun OTPInputScreen(
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(48.dp))
-
-
             Button(
                 onClick = {
-                    if (otpCode.length == 4) {
-                        viewModel.verifyOTP()
+                    if (otpCode.length == otpDigitCount) {
+                        viewModel.verifyOtp()
                     }
                 },
                 modifier = Modifier
@@ -176,15 +171,14 @@ fun OTPInputScreen(
                     containerColor = Color(0xFF2196F3)
                 ),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading && otpCode.length == 4
+                enabled = !authState.isLoading && otpCode.length == otpDigitCount
             ) {
-                if (isLoading) {
+                if (authState.isLoading) {
                     CircularProgressIndicator(
                         color = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
-
                     Text(
                         text = "Gửi mã OTP",
                         fontSize = 20.sp,
@@ -193,22 +187,17 @@ fun OTPInputScreen(
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(24.dp))
-
-
-
-
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Button(
-                    onClick = { viewModel.sendOTP() },
+                    onClick = { viewModel.sendOtp() },
                     modifier = Modifier.size(140.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isLoading,
+                    enabled = !authState.isLoading,
                     contentPadding = PaddingValues(8.dp)
                 ) {
                     Icon(
@@ -232,11 +221,22 @@ fun OTPInputScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
-
             Spacer(modifier = Modifier.height(18.dp))
-
-            successMessage?.let { message ->
+            authState.errorMessage?.let { message ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                ) {
+                    Text(
+                        text = message,
+                        fontSize = 14.sp,
+                        color = Color(0xFFD32F2F),
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            authState.successMessage?.let { message ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
@@ -250,9 +250,17 @@ fun OTPInputScreen(
                     )
                 }
             }
-
-
-
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun OTPInputScreenPreview() {
+    TrustieTheme {
+        OTPInputScreen(
+            onNavigateToHome = {},
+            onNavigateBack = {},
+        )
     }
 }
