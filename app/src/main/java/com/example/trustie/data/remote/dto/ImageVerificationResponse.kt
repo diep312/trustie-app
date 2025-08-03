@@ -1,6 +1,6 @@
 package com.example.trustie.data.remote.dto
 
-import com.example.trustie.ui.model.VerificationState
+import com.example.trustie.data.model.VerificationState
 import com.google.gson.annotations.SerializedName
 
 data class ImageVerificationResponse(

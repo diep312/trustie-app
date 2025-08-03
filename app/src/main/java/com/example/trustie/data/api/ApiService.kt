@@ -1,8 +1,8 @@
 package com.example.trustie.data.api
 
-import com.example.trustie.ui.model.CallHistoryResponse
-import com.example.trustie.ui.model.ConnectionResponse
-import com.example.trustie.ui.model.PhoneCheckResponse
+import com.example.trustie.data.model.CallHistoryResponse
+import com.example.trustie.data.model.ConnectionResponse
+import com.example.trustie.data.model.PhoneCheckResponse
 import kotlinx.coroutines.delay
 
 // Lưu ý: Các class này hiện đang mô phỏng API calls.

@@ -1,9 +1,8 @@
 package com.example.trustie.data.api
 
 import android.util.Log
-import com.example.trustie.ui.model.ReportRequest
-import com.example.trustie.ui.model.ReportResponse
-import kotlinx.coroutines.delay
+import com.example.trustie.data.model.ReportRequest
+import com.example.trustie.data.model.ReportResponse
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body

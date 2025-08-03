@@ -112,11 +112,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.example.trustie.data.api.AuthApiService
-import com.example.trustie.domain.repository.AuthRepository
-import com.example.trustie.ui.model.AuthResponse
-import com.example.trustie.ui.model.LoginRequest
-import com.example.trustie.ui.model.OTPRequest
-import com.example.trustie.ui.model.User
+//import com.example.trustie.domain.repository.AuthRepository
+import com.example.trustie.data.model.AuthResponse
+import com.example.trustie.data.model.LoginRequest
+import com.example.trustie.data.model.OTPRequest
+import com.example.trustie.data.model.datamodel.User
 import javax.inject.Inject
 import javax.inject.Singleton
 

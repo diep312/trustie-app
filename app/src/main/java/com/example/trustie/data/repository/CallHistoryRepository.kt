@@ -1,8 +1,8 @@
 package com.example.trustie.data.repository
 
 import com.example.trustie.data.api.ApiService
-import com.example.trustie.ui.model.CallHistoryItem
-import com.example.trustie.ui.model.CallHistoryResponse
+import com.example.trustie.data.model.CallHistoryItem
+import com.example.trustie.data.model.CallHistoryResponse
 
 import kotlinx.coroutines.delay
 

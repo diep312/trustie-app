@@ -1,8 +1,8 @@
 package com.example.trustie.data.api
 
-import com.example.trustie.ui.model.AuthResponse
-import com.example.trustie.ui.model.LoginRequest
-import com.example.trustie.ui.model.OTPRequest
+import com.example.trustie.data.model.AuthResponse
+import com.example.trustie.data.model.LoginRequest
+import com.example.trustie.data.model.OTPRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 

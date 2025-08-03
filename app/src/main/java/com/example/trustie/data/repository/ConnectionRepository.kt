@@ -96,8 +96,8 @@ package com.example.trustie.data.repository
 
 import android.util.Log
 import com.example.trustie.data.api.ConnectionApiService
-import com.example.trustie.ui.model.ConnectionResponse
-import com.example.trustie.ui.model.RelativeConnection
+import com.example.trustie.data.model.ConnectionResponse
+import com.example.trustie.data.model.RelativeConnection
 import kotlinx.coroutines.delay
 
 class ConnectionRepository(

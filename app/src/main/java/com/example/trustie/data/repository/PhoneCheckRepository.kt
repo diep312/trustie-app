@@ -2,8 +2,8 @@ package com.example.trustie.data.repository
 
 import android.util.Log
 import com.example.trustie.data.api.PhoneCheckApiService
-import com.example.trustie.ui.model.PhoneCheckItem
-import com.example.trustie.ui.model.PhoneCheckResponse
+import com.example.trustie.data.model.PhoneCheckItem
+import com.example.trustie.data.model.PhoneCheckResponse
 import kotlinx.coroutines.delay
 
 class PhoneCheckRepository(

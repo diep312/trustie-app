@@ -2,8 +2,8 @@ package com.example.trustie.data.repository
 
 import android.util.Log
 import com.example.trustie.data.api.ReportApiService
-import com.example.trustie.ui.model.ReportRequest
-import com.example.trustie.ui.model.ReportResponse
+import com.example.trustie.data.model.ReportRequest
+import com.example.trustie.data.model.ReportResponse
 
 class ReportRepository(
     private val apiService: ReportApiService = ReportApiService()

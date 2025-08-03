@@ -184,8 +184,18 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.trustie.ui.screen.*
-import com.example.trustie.ui.viewmodel.AuthViewModel
+import com.example.trustie.ui.screen.alert.IncomingCallAlertScreen
+import com.example.trustie.ui.screen.home.HomeScreen
+import com.example.trustie.ui.screen.report.ReportPhoneScreen
+import com.example.trustie.ui.screen.auth.AuthViewModel
+import com.example.trustie.ui.screen.auth.OTPInputScreen
+import com.example.trustie.ui.screen.auth.PhoneInputScreen
+import com.example.trustie.ui.screen.callhistory.CallHistoryScreen
+import com.example.trustie.ui.screen.checkphone.CheckPhoneScreen
+import com.example.trustie.ui.screen.connect.ConnectRelativesScreen
+import com.example.trustie.ui.screen.imagedetection.ImageVerificationScreen
+import com.example.trustie.ui.screen.notification.NotificationScreen
+import com.example.trustie.ui.screen.splash.SplashScreen
 
 @Composable
 fun AppNavigation(
@@ -249,15 +259,19 @@ fun AppNavigation(
                         "Lịch sử gọi" -> {
                             navController.navigate(Screen.CallHistory.route)
                         }
+
                         "Báo cáo số" -> {
                             navController.navigate(Screen.ReportPhone.route)
                         }
+
                         "Kết nối" -> {
                             navController.navigate(Screen.ConnectRelatives.route)
                         }
+
                         "Kiểm tra ảnh" -> {
                             navController.navigate(Screen.CheckImage.route)
                         }
+
                         "Kiểm tra Số" -> {
                             navController.navigate(Screen.CheckPhone.route)
                         }
