@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.components.FeatureCard
 import com.example.trustie.data.model.FeatureItem
@@ -37,12 +37,13 @@ import com.example.trustie.ui.screen.home.HomeViewModel
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onFeatureClick: (FeatureItem) -> Unit = {},
-    onLogoutClick: () -> Unit,
+    onLogoutClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val isAlertEnabled by viewModel.isAlertEnabled.collectAsState()
     val showAlertDialog by viewModel.showAlertDialog.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsState()
     val features = listOf(
         FeatureItem(
             title = "Lịch sử gọi",
@@ -163,6 +164,42 @@ fun HomeScreen(
         }
 
         Spacer(modifier = Modifier.height(4.dp))
+
+        // User Welcome Section
+        currentUser?.let { user ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE3F2FD),
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Xin chào, ${user.name}!",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1976D2)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Email: ${user.email ?: "Không có email"}",
+                        fontSize = 14.sp,
+                        color = Color(0xFF424242)
+                    )
+                    Text(
+                        text = "Loại tài khoản: ${if (user.isElderly) "Người cao tuổi" else "Người thân"}",
+                        fontSize = 14.sp,
+                        color = Color(0xFF424242)
+                    )
+                }
+            }
+        }
 
         Card(
             modifier = Modifier

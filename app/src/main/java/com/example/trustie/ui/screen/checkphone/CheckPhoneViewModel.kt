@@ -4,14 +4,14 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trustie.data.model.PhoneCheckItem
-import com.example.trustie.data.repository.PhoneCheckRepository
+import com.example.trustie.repository.phonerepo.PhoneRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CheckPhoneViewModel(
-    private val repository: PhoneCheckRepository = PhoneCheckRepository()
+    private val repository: PhoneRepository
 ) : ViewModel() {
 
     private val _phoneNumber = MutableStateFlow("")
@@ -59,13 +59,19 @@ class CheckPhoneViewModel(
                 Log.d("CheckPhoneDebug", "Checking phone number: $number")
                 val response = repository.checkPhoneNumber(number)
 
-                if (response.success && response.data != null) {
-                    _checkResult.value = response.data
-                    Log.d("CheckPhoneDebug", "Phone check successful: ${response.data}")
-                } else {
-                    _errorMessage.value = response.message ?: "Không thể kiểm tra số điện thoại"
-                    Log.e("CheckPhoneDebug", "Phone check failed: ${response.message}")
-                }
+                // Convert PhoneCheckResponse to PhoneCheckItem
+                val phoneCheckItem = PhoneCheckItem(
+                    phoneNumber = number,
+                    isSuspicious = response.isFlagged,
+                    riskLevel = if (response.isFlagged) "High" else "Low",
+                    reportCount = 0,
+                    lastReported = null,
+                    description = response.flagReason
+                )
+                
+                _checkResult.value = phoneCheckItem
+                Log.d("CheckPhoneDebug", "Phone check successful: $phoneCheckItem")
+                
             } catch (e: Exception) {
                 _errorMessage.value = "Lỗi kết nối: ${e.message}"
                 Log.e("CheckPhoneDebug", "Exception during phone check: ${e.message}", e)

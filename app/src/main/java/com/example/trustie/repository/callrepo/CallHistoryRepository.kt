@@ -1,14 +1,10 @@
-package com.example.trustie.data.repository
+package com.example.trustie.repository.callrepo
 
-import com.example.trustie.data.api.ApiService
 import com.example.trustie.data.model.CallHistoryItem
 import com.example.trustie.data.model.CallHistoryResponse
-
 import kotlinx.coroutines.delay
 
-class CallHistoryRepository(
-    private val apiService: ApiService = ApiService()
-) {
+class CallHistoryRepository {
 
     suspend fun getCallHistory(): CallHistoryResponse {
         return try {

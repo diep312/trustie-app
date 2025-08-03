@@ -1,15 +1,14 @@
 package com.example.trustie.data.api
 
-import com.example.trustie.data.model.AuthResponse
-import com.example.trustie.data.model.LoginRequest
-import com.example.trustie.data.model.OTPRequest
+import com.example.trustie.data.model.AuthRequest
+import com.example.trustie.data.model.datamodel.User
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface AuthApiService {
-    @POST("api/v1/auth/send-otp")
-    suspend fun sendOtp(@Body request: LoginRequest): AuthResponse
+    @POST("auth/send-otp")
+    suspend fun sendOtp(@Body request: AuthRequest): User
 
-    @POST("api/v1/auth/verify-otp")
-    suspend fun verifyOtp(@Body request: OTPRequest): AuthResponse
+    @POST("auth/verify-otp")
+    suspend fun verifyOtp(@Body request: AuthRequest): User
 }

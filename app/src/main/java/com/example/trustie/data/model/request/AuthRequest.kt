@@ -2,6 +2,11 @@ package com.example.trustie.data.model
 
 import com.example.trustie.data.model.datamodel.User
 
+data class AuthRequest(
+    val phoneNumber: String,
+    val otp: String? = null
+)
+
 data class LoginRequest(
     val phoneNumber: String
 )

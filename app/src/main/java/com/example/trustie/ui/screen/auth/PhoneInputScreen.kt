@@ -38,6 +38,7 @@ fun PhoneInputScreen(
 ) {
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val authState by viewModel.authState.collectAsState()
+    val isOtpSent by viewModel.isOtpSent.collectAsState()
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -45,8 +46,8 @@ fun PhoneInputScreen(
 
     Log.d("PhoneInputScreen", "PhoneInputScreen recomposed")
 
-    LaunchedEffect(authState.isOtpSent) {
-        if (authState.isOtpSent) {
+    LaunchedEffect(isOtpSent) {
+        if (isOtpSent) {
             onNavigateToOTP()
         }
     }

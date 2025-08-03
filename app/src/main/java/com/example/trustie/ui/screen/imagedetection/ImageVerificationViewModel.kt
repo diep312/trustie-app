@@ -4,21 +4,22 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.trustie.data.GlobalStateManager
 import com.example.trustie.data.model.ImageVerificationUiState
 import com.example.trustie.data.model.VerificationState
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.example.trustie.data.model.request.ImageVerificationRequest
+import com.example.trustie.repository.imagerepo.ImageVerificationRepository
+import com.example.trustie.repository.imagerepo.ImageVerificationRepositoryImpl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class ImageVerificationViewModel @Inject constructor(
-    private val repository: ImageVerificationRepository,
-    private val authRepository: AuthRepository
-) : ViewModel() {
+class ImageVerificationViewModel : ViewModel() {
+    private val repository: ImageVerificationRepository = ImageVerificationRepositoryImpl()
+    private val globalStateManager: GlobalStateManager = GlobalStateManager()
+    
     private val _uiState = MutableStateFlow(ImageVerificationUiState())
     val uiState: StateFlow<ImageVerificationUiState> = _uiState.asStateFlow()
 
@@ -45,7 +46,8 @@ class ImageVerificationViewModel @Inject constructor(
                 return@launch
             }
 
-            val userId = authRepository.getUserId() ?: 1
+            // Get user ID from global state
+            val userId = globalStateManager.getUserId() ?: 1
             Log.d("ImageVerificationDebug", "Using userId: $userId for image verification.")
 
             _uiState.value = _uiState.value.copy(
@@ -55,7 +57,14 @@ class ImageVerificationViewModel @Inject constructor(
                 ocrText = null
             )
 
-            val result = repository.verifyImage(Uri.parse(currentImageUri), userId, "Image verification request")
+            // Create request object
+            val request = ImageVerificationRequest(
+                userId = userId,
+                description = "Image verification request",
+                imageUri = currentImageUri
+            )
+
+            val result = repository.verifyImage(request)
             result.onSuccess { response ->
                 _uiState.value = _uiState.value.copy(
                     verificationState = response.toVerificationState(),

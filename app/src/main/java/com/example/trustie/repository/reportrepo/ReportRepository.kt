@@ -1,18 +1,19 @@
-package com.example.trustie.data.repository
+package com.example.trustie.repository.reportrepo
 
 import android.util.Log
-import com.example.trustie.data.api.ReportApiService
-import com.example.trustie.data.model.ReportRequest
 import com.example.trustie.data.model.ReportResponse
+import kotlinx.coroutines.delay
 
-class ReportRepository(
-    private val apiService: ReportApiService = ReportApiService()
-) {
+class ReportRepository {
     suspend fun submitPhoneReport(phoneNumber: String, reason: String): ReportResponse {
         return try {
             Log.d("ReportRepoDebug", "Submitting phone report for $phoneNumber - $reason")
-            val request = ReportRequest(phoneNumber, reason)
-            apiService.submitReport(request)
+            delay(1000) // Simulate API call
+            
+            ReportResponse(
+                success = true,
+                message = "Báo cáo đã được gửi thành công"
+            )
         } catch (e: Exception) {
             Log.e("ReportRepoDebug", "Error in submitPhoneReport: ${e.message}", e)
             ReportResponse(

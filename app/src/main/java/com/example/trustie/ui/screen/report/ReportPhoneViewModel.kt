@@ -3,7 +3,7 @@ package com.example.trustie.ui.screen.report
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trustie.data.repository.ReportRepository
+import com.example.trustie.repository.reportrepo.ReportRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
