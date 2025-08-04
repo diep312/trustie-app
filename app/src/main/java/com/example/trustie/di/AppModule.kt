@@ -1,171 +1,86 @@
-//package com.example.trustie.di
-//
-//import android.content.Context
-//import com.example.trustie.data.api.AuthApiService
-//import com.example.trustie.data.remote.ImageVerificationApiService
-//import com.example.trustie.data.repository.AuthRepositoryImpl
-//import com.example.trustie.data.repository.ImageVerificationRepositoryImpl
-//import com.example.trustie.domain.repository.AuthRepository
-//import com.example.trustie.domain.repository.ImageVerificationRepository
-//import dagger.Binds
-//import dagger.Module
-//import dagger.Provides
-//import dagger.hilt.InstallIn
-//import dagger.hilt.android.qualifiers.ApplicationContext
-//import dagger.hilt.components.SingletonComponent
-//import okhttp3.OkHttpClient
-//import okhttp3.logging.HttpLoggingInterceptor
-//import retrofit2.Retrofit
-//import retrofit2.converter.gson.GsonConverterFactory
-//import javax.inject.Singleton
-//
-//@Module
-//@InstallIn(SingletonComponent::class)
-//abstract class AppModule { // Vẫn là abstract class vì có @Binds
-//
-//    // Các phương thức @Provides phải nằm trong companion object và được đánh dấu @JvmStatic
-//    companion object {
-//        @Provides
-//        @Singleton
-//        @JvmStatic // Bắt buộc phải là static khi module là abstract class
-//        fun provideOkHttpClient(): OkHttpClient {
-//            return OkHttpClient.Builder()
-//                .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
-//                .build()
-//        }
-//
-//        @Provides
-//        @Singleton
-//        @JvmStatic // Bắt buộc phải là static
-//        fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-//            return Retrofit.Builder()
-//                .baseUrl("http://54.90.139.125")
-//                .addConverterFactory(GsonConverterFactory.create())
-//                .client(okHttpClient)
-//                .build()
-//        }
-//
-//        @Provides
-//        @Singleton
-//        @JvmStatic // Bắt buộc phải là static
-//        fun provideImageVerificationApiService(retrofit: Retrofit): ImageVerificationApiService {
-//            return retrofit.create(ImageVerificationApiService::class.java)
-//        }
-//
-//        @Provides
-//        @Singleton
-//        @JvmStatic // Bắt buộc phải là static
-//        fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
-//            return retrofit.create(AuthApiService::class.java)
-//        }
-//
-//        @Provides
-//        @Singleton
-//        @JvmStatic // Bắt buộc phải là static
-//        fun provideImageVerificationRepository(
-//            apiService: ImageVerificationApiService,
-//            @ApplicationContext context: Context
-//        ): ImageVerificationRepository {
-//            return ImageVerificationRepositoryImpl(apiService, context)
-//        }
-//    }
-//
-//    // Phương thức @Binds vẫn nằm ngoài companion object và là abstract
-//    @Binds
-//    @Singleton
-//    abstract fun bindAuthRepository(
-//        authRepositoryImpl: AuthRepositoryImpl
-//    ): AuthRepository
-//}
-
-
 package com.example.trustie.di
 
+import com.example.trustie.repository.authrepo.AuthRepository
+import com.example.trustie.repository.authrepo.AuthRepositoryImpl
+import com.example.trustie.repository.phonerepo.PhoneRepository
+import com.example.trustie.repository.phonerepo.PhoneRepositoryImpl
+import com.example.trustie.repository.imagerepo.ImageVerificationRepository
+import com.example.trustie.repository.imagerepo.ImageVerificationRepositoryImpl
+import com.example.trustie.repository.ttsrepo.TextToSpeechRepository
+import com.example.trustie.repository.ttsrepo.TextToSpeechRepositoryImpl
+import com.example.trustie.repository.connectrepo.ConnectionRepository
+import com.example.trustie.repository.callrepo.CallHistoryRepository
+import com.example.trustie.repository.reportrepo.ReportRepository
 import android.content.Context
-import com.example.trustie.data.api.AuthApiService
-import com.example.trustie.data.remote.ImageVerificationApiService
-import com.example.trustie.data.repository.AuthRepositoryImpl
-import com.example.trustie.data.repository.ImageVerificationRepositoryImpl
-import com.example.trustie.domain.repository.AuthRepository
-import com.example.trustie.domain.repository.ImageVerificationRepository
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class AppModule { // Vẫn là abstract class vì có @Binds
-
-    // Các phương thức @Provides phải nằm trong companion object và được đánh dấu @JvmStatic
-    companion object {
-        @Provides
-        @Singleton
-        @JvmStatic // Bắt buộc phải là static khi module là abstract class
-        fun provideOkHttpClient(): OkHttpClient {
-            return OkHttpClient.Builder()
-                .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
-                .build()
-        }
-
-        @Provides
-        @Singleton
-        @JvmStatic // Bắt buộc phải là static
-        fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-            return Retrofit.Builder()
-                .baseUrl("http://54.90.139.125") // <-- Đảm bảo đây là BASE URL CHÍNH XÁC của backend của bạn
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(okHttpClient)
-                .build()
-        }
-
-        @Provides
-        @Singleton
-        @JvmStatic // Bắt buộc phải là static
-        fun provideImageVerificationApiService(retrofit: Retrofit): ImageVerificationApiService {
-            return retrofit.create(ImageVerificationApiService::class.java)
-        }
-
-        @Provides
-        @Singleton
-        @JvmStatic // Bắt buộc phải là static
-        fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
-            return retrofit.create(AuthApiService::class.java)
-        }
-
-        @Provides
-        @Singleton
-        @JvmStatic // Bắt buộc phải là static
-        fun provideImageVerificationRepository(
-            apiService: ImageVerificationApiService,
-            @ApplicationContext context: Context
-        ): ImageVerificationRepository {
-            return ImageVerificationRepositoryImpl(apiService, context)
-        }
-
-        // THÊM PHƯƠNG THỨC NÀY ĐỂ CUNG CẤP AuthRepositoryImpl
-        @Provides
-        @Singleton
-        @JvmStatic
-        fun provideAuthRepositoryImpl(
-            @ApplicationContext context: Context, // Hilt sẽ cung cấp ApplicationContext
-            apiService: AuthApiService
-        ): AuthRepositoryImpl {
-            return AuthRepositoryImpl(context, apiService)
-        }
-    }
-
-    // Phương thức @Binds vẫn nằm ngoài companion object và là abstract
+abstract class AppModule {
+    
     @Binds
     @Singleton
     abstract fun bindAuthRepository(
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindPhoneRepository(
+        phoneRepositoryImpl: PhoneRepositoryImpl
+    ): PhoneRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindImageVerificationRepository(
+        imageVerificationRepositoryImpl: ImageVerificationRepositoryImpl
+    ): ImageVerificationRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindTextToSpeechRepository(
+        textToSpeechRepositoryImpl: TextToSpeechRepositoryImpl
+    ): TextToSpeechRepository
 }
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModuleObject {
+    
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideContext(@ApplicationContext context: Context): Context {
+        return context
+    }
+    
+    @Provides
+    @Singleton
+    fun provideConnectionRepository(): ConnectionRepository {
+        return ConnectionRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCallHistoryRepository(): CallHistoryRepository {
+        return CallHistoryRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideReportRepository(): ReportRepository {
+        return ReportRepository()
+    }
+} 

@@ -1,9 +1,9 @@
 package com.example.trustie.data.api
 
-import com.example.trustie.ui.model.CallHistoryResponse
+import com.example.trustie.data.model.datamodel.CallHistoryItem
 import retrofit2.http.GET
 
-interface CallApi {
+interface CallApiService {
     @GET("call-history")
-    suspend fun getCallHistory(): CallHistoryResponse
+    suspend fun getCallHistory(): List<CallHistoryItem>
 }

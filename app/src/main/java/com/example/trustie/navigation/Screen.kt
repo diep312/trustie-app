@@ -11,6 +11,7 @@ sealed class Screen(val route: String) {
     object CheckImage : Screen("check_image")
     object ConnectRelatives : Screen("connect_relatives")
     object Notifications : Screen("notifications")
+    object ScamResult : Screen("scam_result")
     object IncomingCallAlert : Screen("incoming_call_alert/{phoneNumber}/{isSuspicious}") {
         fun createRoute(phoneNumber: String, isSuspicious: Boolean) = "incoming_call_alert/$phoneNumber/$isSuspicious"
     }

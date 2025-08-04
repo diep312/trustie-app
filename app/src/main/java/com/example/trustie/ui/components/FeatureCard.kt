@@ -1,6 +1,6 @@
 package com.example.trustie.ui.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -10,12 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.trustie.ui.model.FeatureItem
+import com.example.trustie.data.model.FeatureItem
 
 @Composable
 fun FeatureCard(
@@ -37,12 +38,22 @@ fun FeatureCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = feature.icon,
-                contentDescription = feature.title,
-                tint = feature.iconColor,
-                modifier = Modifier.size(85.dp)
-            )
+            // Display icon based on type
+            if (feature.iconResId != null) {
+                Image(
+                    painter = painterResource(id = feature.iconResId),
+                    contentDescription = feature.title,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(85.dp)
+                )
+            } else if (feature.icon != null) {
+                Icon(
+                    imageVector = feature.icon,
+                    contentDescription = feature.title,
+                    tint = feature.iconColor,
+                    modifier = Modifier.size(85.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
