@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.components.NotificationCard
 import com.example.trustie.ui.theme.TrustieTheme
@@ -27,7 +27,7 @@ import com.example.trustie.ui.screen.notification.NotificationViewModel
 @Composable
 fun NotificationScreen(
     onBackClick: () -> Unit,
-    viewModel: NotificationViewModel = viewModel()
+    viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()

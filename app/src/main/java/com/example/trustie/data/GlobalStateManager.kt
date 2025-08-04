@@ -1,6 +1,7 @@
 package com.example.trustie.data
 
 import com.example.trustie.data.model.datamodel.User
+import com.example.trustie.data.model.response.ImageVerificationResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,9 @@ class GlobalStateManager @Inject constructor() {
     
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+    
+    private val _verificationResponse = MutableStateFlow<ImageVerificationResponse?>(null)
+    val verificationResponse: StateFlow<ImageVerificationResponse?> = _verificationResponse.asStateFlow()
     
     fun setUser(user: User?) {
         _currentUser.value = user
@@ -37,4 +41,14 @@ class GlobalStateManager @Inject constructor() {
     fun isUserElderly(): Boolean {
         return _currentUser.value?.isElderly ?: false
     }
+    
+    fun setVerificationResponse(response: ImageVerificationResponse?) {
+        _verificationResponse.value = response
+    }
+    
+    fun clearVerificationResponse() {
+        _verificationResponse.value = null
+    }
+
+    companion object
 } 

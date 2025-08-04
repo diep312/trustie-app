@@ -24,16 +24,16 @@ import com.example.trustie.ui.screen.connect.ConnectRelativesScreen
 import com.example.trustie.ui.screen.report.ReportPhoneScreen
 import com.example.trustie.ui.screen.alert.IncomingCallAlertScreen
 import com.example.trustie.ui.screen.imagedetection.ImageVerificationScreen
+import com.example.trustie.ui.screen.scamresult.ScamResultScreen
 import com.example.trustie.ui.screen.notification.NotificationScreen
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    // Khởi tạo AuthViewModel một lần ở đây
-    val authViewModel: AuthViewModel = viewModel()
     val isLoggedIn by authViewModel.authState.collectAsState()
 
     NavHost(
@@ -90,13 +90,13 @@ fun AppNavigation(
                         "Báo cáo số" -> {
                             navController.navigate(Screen.ReportPhone.route)
                         }
-                        "Kết nối" -> {
+                        "Kết nối người thân" -> {
                             navController.navigate(Screen.ConnectRelatives.route)
                         }
                         "Kiểm tra ảnh" -> {
                             navController.navigate(Screen.CheckImage.route)
                         }
-                        "Kiểm tra Số" -> {
+                        "Kiểm tra số" -> {
                             navController.navigate(Screen.CheckPhone.route)
                         }
                     }
@@ -168,6 +168,15 @@ fun AppNavigation(
 
         composable(Screen.CheckImage.route) {
             ImageVerificationScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToScamResult = { verificationResponse ->
+                    navController.navigate(Screen.ScamResult.route)
+                }
+            )
+        }
+
+        composable(Screen.ScamResult.route) {
+            ScamResultScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }

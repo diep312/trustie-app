@@ -3,7 +3,6 @@ package com.example.trustie.ui.base
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,7 +14,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
+import android.view.View
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.ui.screen.auth.AuthState
 import com.example.trustie.ui.screen.auth.AuthViewModel
 import com.example.trustie.ui.screen.home.HomeScreen
@@ -27,10 +32,11 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 abstract class BaseAuthenticatedActivity : ComponentActivity() {
     
-    private val authViewModel: AuthViewModel by viewModels()
-    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Configure status bar for light theme
+        configureStatusBar()
         
         setContent {
             TrustieTheme {
@@ -38,96 +44,80 @@ abstract class BaseAuthenticatedActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AuthenticationWrapper(
-                        authViewModel = authViewModel,
-                        onAuthenticated = { user ->
-                            // User is authenticated, show the main content
-                            showMainContent(user)
-                        },
-                        onUnauthenticated = {
-                            // User is not authenticated, show login
-                            showLoginScreen()
-                        }
-                    )
+                    AuthenticationWrapper()
                 }
             }
         }
     }
+
+    private fun configureStatusBar() {
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Set background color
+        val backgroundColor = Color(0xFFFDF2E9).toArgb()
+        window.statusBarColor = backgroundColor
+        window.navigationBarColor = backgroundColor
+
+        // Set dark icons (light theme = dark icons)
+        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = true
+        insetsController.isAppearanceLightNavigationBars = true
+    }
     
     @Composable
-    private fun AuthenticationWrapper(
-        authViewModel: AuthViewModel,
-        onAuthenticated: (com.example.trustie.data.model.datamodel.User) -> Unit,
-        onUnauthenticated: () -> Unit
-    ) {
+    private fun AuthenticationWrapper() {
+        val authViewModel: AuthViewModel = hiltViewModel()
         val authState by authViewModel.authState.collectAsState()
         val isLoading by authViewModel.isLoading.collectAsState()
         
-        LaunchedEffect(authState) {
-            when (authState) {
-                is AuthState.Initial -> {
-                    // Still checking auth status, show loading
-                }
-                is AuthState.Authenticated -> {
-                    onAuthenticated((authState as AuthState.Authenticated).user)
-                }
-                is AuthState.Unauthenticated -> {
-                    onUnauthenticated()
-                }
-                is AuthState.Error -> {
-                    // Handle error, maybe show error screen or retry
-                    onUnauthenticated()
-                }
-                is AuthState.Success -> {
-                    // Handle success state
+        when {
+            isLoading || authState is AuthState.Initial -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
-        }
-        
-        if (isLoading || authState is AuthState.Initial) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+            authState is AuthState.Authenticated -> {
+                MainContent(authViewModel)
+            }
+            authState is AuthState.Unauthenticated -> {
+                LoginContent(authViewModel)
+            }
+            authState is AuthState.Error -> {
+                // Handle error, show login screen
+                LoginContent(authViewModel)
+            }
+            else -> {
+                // Default to login screen
+                LoginContent(authViewModel)
             }
         }
     }
     
     @Composable
-    private fun showMainContent(user: com.example.trustie.data.model.datamodel.User) {
-        // Show the main app content
-        MainContent()
-    }
-    
-    @Composable
-    private fun showLoginScreen() {
-        // Show login screen with auto-login for now
-        LaunchedEffect(Unit) {
-            authViewModel.loginWithFixedUser()
-        }
-        
-        // Show splash screen while auto-logging in
-        SplashScreen(
-            onNavigateToLogin = { /* Handle navigation to login */ },
-            onNavigateToHome = { /* Handle navigation to home */ },
-            isLoggedIn = false
-        )
-    }
-
-    @Composable
-    protected open fun MainContent() {
+    protected open fun MainContent(authViewModel: AuthViewModel) {
         HomeScreen(
-            onNavigateToLogin = { /* Handle navigation to login */ },
-            onNavigateToHome = { /* Handle navigation to home */ },
-            isLoggedIn = true,
-            onLogoutClick = { authViewModel.logout() }
+            onFeatureClick = { /* Handle feature click */ },
+            onLogoutClick = { authViewModel.logout() },
+            onNotificationClick = { /* Handle notification click */ }
         )
     }
     
 
     @Composable
-    protected open fun LoginContent() {
+    protected open fun LoginContent(authViewModel: AuthViewModel) {
+        // Auto-login for now - only if not already loading and not authenticated
+        LaunchedEffect(Unit) {
+            val currentState = authViewModel.authState.value
+            if (currentState is AuthState.Unauthenticated || currentState is AuthState.Error) {
+                android.util.Log.d("BaseAuthenticatedActivity", "LoginContent - auto-login triggered")
+                authViewModel.loginWithFixedUser()
+            }
+        }
+        
         SplashScreen(
             onNavigateToLogin = { /* Handle navigation to login */ },
             onNavigateToHome = { /* Handle navigation to home */ },

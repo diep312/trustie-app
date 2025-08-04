@@ -8,9 +8,3 @@ data class PhoneCheckItem(
     val lastReported: String?,
     val description: String?
 )
-
-data class PhoneCheckResponse(
-    val success: Boolean,
-    val data: PhoneCheckItem?,
-    val message: String? = null
-)

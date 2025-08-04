@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.trustie.data.model.CallHistoryItem
+import com.example.trustie.data.model.datamodel.CallHistoryItem
 
 @Composable
 fun CallHistoryCard(
@@ -19,83 +19,107 @@ fun CallHistoryCard(
     onCallClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val displayName = if (callItem.isSuspicious) {
-        "Khả nghi lừa đảo"
-    } else {
-        callItem.contactName
+    // Determine status and colors based on call type
+    val (statusText, statusColor) = when {
+        callItem.isSuspicious -> "Lừa đảo" to Color(0xFFD32F2F) // Red for scam
+        callItem.contactName == "Người lạ" -> "Nghi ngờ" to Color(0xFF8D6E63) // Brown for suspicious
+        else -> "An toàn" to Color(0xFF4CAF50) // Green for safe
     }
-    val borderColor = if (callItem.isSuspicious) Color(0xFFF44336) else Color(0xFF4CAF50)
-    val cardBackgroundColor = Color.White
+    
+    val displayName = when {
+        callItem.isSuspicious -> "Người lạ"
+        callItem.contactName == "Người lạ" -> "Người lạ"
+        else -> callItem.contactName
+    }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(6.dp, borderColor, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFDBD5E8)), // Light purple background
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ){
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-
+            // Top row: Name and Phone Number
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = if (callItem.isSuspicious) "Khả nghi lừa đảo" else callItem.contactName,
+                    text = displayName,
                     color = Color.Black,
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = callItem.phoneNumber,
                     color = Color.Black,
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-
+            // Middle row: Time and Location
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = callItem.time,
                     color = Color.Gray,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
                 Text(
                     text = callItem.country,
                     color = Color.Gray,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-
+            // Bottom row: Call Type and Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = callItem.callType,
-                    color = Color.Gray,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "📞 Cuộc gọi đến",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+                
+                // Status button
+                Surface(
+                    shape = RoundedCornerShape(100.dp),
+                    color = statusColor,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = statusText,
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
         }
     }

@@ -42,13 +42,20 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getCurrentUser(): Flow<User?> {
         return context.dataStore.data.map { preferences ->
             val isLoggedIn = preferences[IS_LOGGED_IN_KEY] ?: false
+            android.util.Log.d("AuthRepositoryImpl", "getCurrentUser - isLoggedIn: $isLoggedIn")
+            
             if (!isLoggedIn) {
+                android.util.Log.d("AuthRepositoryImpl", "getCurrentUser - not logged in, returning null")
                 null
             } else {
                 try {
+                    val userId = preferences[USER_ID_KEY] ?: 0
+                    val userName = preferences[USER_NAME_KEY] ?: ""
+                    android.util.Log.d("AuthRepositoryImpl", "getCurrentUser - userId: $userId, userName: $userName")
+                    
                     User(
-                        id = preferences[USER_ID_KEY] ?: 0,
-                        name = preferences[USER_NAME_KEY] ?: "",
+                        id = userId,
+                        name = userName,
                         email = preferences[USER_EMAIL_KEY] ?: "",
                         deviceId = preferences[USER_DEVICE_ID_KEY] ?: "",
                         isElderly = preferences[USER_IS_ELDERLY_KEY] ?: false,
@@ -57,6 +64,7 @@ class AuthRepositoryImpl @Inject constructor(
                         updatedAt = preferences[USER_UPDATED_AT_KEY] ?: ""
                     )
                 } catch (e: Exception) {
+                    android.util.Log.e("AuthRepositoryImpl", "getCurrentUser - error creating user", e)
                     null
                 }
             }
@@ -100,6 +108,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUser(user: User) {
+        android.util.Log.d("AuthRepositoryImpl", "saveUser - saving user: ${user.name} (ID: ${user.id})")
         context.dataStore.edit { preferences ->
             preferences[IS_LOGGED_IN_KEY] = true
             preferences[USER_ID_KEY] = user.id
@@ -111,6 +120,7 @@ class AuthRepositoryImpl @Inject constructor(
             preferences[USER_CREATED_AT_KEY] = user.createdAt
             preferences[USER_UPDATED_AT_KEY] = user.updatedAt
         }
+        android.util.Log.d("AuthRepositoryImpl", "saveUser - user saved successfully")
     }
 
     override suspend fun clearUser() {

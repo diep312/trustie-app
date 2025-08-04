@@ -2,12 +2,13 @@ package com.example.trustie.repository.imagerepo
 
 import android.util.Log
 import com.example.trustie.data.model.request.ImageVerificationRequest
-import com.example.trustie.data.remote.dto.ImageVerificationResponse
-import com.example.trustie.data.remote.dto.Entities
-import com.example.trustie.data.remote.dto.LlmAnalysis
+import com.example.trustie.data.model.response.ImageVerificationResponse
+import com.example.trustie.data.model.response.Entities
+import com.example.trustie.data.model.response.LlmAnalysis
 import kotlinx.coroutines.delay
+import javax.inject.Inject
 
-class ImageVerificationRepositoryImpl : ImageVerificationRepository {
+class ImageVerificationRepositoryImpl @Inject constructor() : ImageVerificationRepository {
 
     override suspend fun verifyImage(request: ImageVerificationRequest): Result<ImageVerificationResponse> {
         return try {

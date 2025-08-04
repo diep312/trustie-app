@@ -9,16 +9,19 @@ import com.example.trustie.data.model.ImageVerificationUiState
 import com.example.trustie.data.model.VerificationState
 import com.example.trustie.data.model.request.ImageVerificationRequest
 import com.example.trustie.repository.imagerepo.ImageVerificationRepository
-import com.example.trustie.repository.imagerepo.ImageVerificationRepositoryImpl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class ImageVerificationViewModel : ViewModel() {
-    private val repository: ImageVerificationRepository = ImageVerificationRepositoryImpl()
-    private val globalStateManager: GlobalStateManager = GlobalStateManager()
+@HiltViewModel
+class ImageVerificationViewModel @Inject constructor(
+    private val repository: ImageVerificationRepository,
+    private val globalStateManager: GlobalStateManager
+) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ImageVerificationUiState())
     val uiState: StateFlow<ImageVerificationUiState> = _uiState.asStateFlow()
@@ -66,12 +69,27 @@ class ImageVerificationViewModel : ViewModel() {
 
             val result = repository.verifyImage(request)
             result.onSuccess { response ->
+                Log.d("ImageVerificationDebug", "Verification response received: $response")
+                
+                // Store the response in GlobalStateManager for ScamResultScreen
+                globalStateManager.setVerificationResponse(response)
+                
+                // For now, we'll keep the old states for backward compatibility
+                // The actual navigation to ScamResultScreen will be handled in the UI
+                val nextState = when (response.llmAnalysis.riskLevel.uppercase()) {
+                    "HIGH" -> VerificationState.WARNING
+                    "MEDIUM" -> VerificationState.WARNING
+                    "LOW" -> VerificationState.SAFE
+                    else -> VerificationState.SAFE
+                }
+                
                 _uiState.value = _uiState.value.copy(
-                    verificationState = response.toVerificationState(),
+                    verificationState = nextState,
                     isLoading = false,
-                    ocrText = response.ocrText
+                    ocrText = response.ocrText,
+                    verificationResponse = response
                 )
-                Log.d("ImageVerificationDebug", "Verification finished. State: ${response.toVerificationState()}, OCR: ${response.ocrText}")
+                Log.d("ImageVerificationDebug", "Verification finished. State: $nextState, Risk Level: ${response.llmAnalysis.riskLevel}")
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
                     verificationState = VerificationState.INITIAL,
@@ -89,6 +107,7 @@ class ImageVerificationViewModel : ViewModel() {
 
     fun resetToInitial() {
         Log.d("ImageVerificationDebug", "resetToInitial called")
+        globalStateManager.clearVerificationResponse()
         _uiState.value = ImageVerificationUiState()
     }
 

@@ -4,13 +4,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trustie.repository.reportrepo.ReportRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ReportPhoneViewModel(
-    private val repository: ReportRepository = ReportRepository()
+@HiltViewModel
+class ReportPhoneViewModel @Inject constructor(
+    private val repository: ReportRepository
 ) : ViewModel() {
 
     private val _phoneNumber = MutableStateFlow("")

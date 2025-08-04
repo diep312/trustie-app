@@ -10,9 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +26,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.trustie.R
 import com.example.trustie.data.model.VerificationState
+import com.example.trustie.data.model.response.ImageVerificationResponse
+import com.example.trustie.ui.components.ScreenHeader
 import com.example.trustie.ui.theme.TrustieTheme
 import com.example.trustie.ui.screen.imagedetection.ImageVerificationViewModel
 
@@ -36,9 +35,15 @@ import com.example.trustie.ui.screen.imagedetection.ImageVerificationViewModel
 @Composable
 fun ImageVerificationScreen(
     onBackClick: () -> Unit,
+    onNavigateToScamResult: (ImageVerificationResponse) -> Unit,
     viewModel: ImageVerificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Reset to initial state when screen is first displayed
+    LaunchedEffect(Unit) {
+        viewModel.resetToInitial()
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -47,70 +52,60 @@ fun ImageVerificationScreen(
         }
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFDF2E9))
-    ) {
-        TopAppBar(
-            title = {
-                Row(
-                    modifier = Modifier.height(50.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "KIỂM TRA",
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF208EE1),
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                }
-            },
-            navigationIcon = {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(60.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.back_buttonn),
-                        contentDescription = "Back",
-                        modifier = Modifier.size(120.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color(0xFFFDF2E9)
-            )
-        )
-        Spacer(modifier = Modifier.height(64.dp))
+    // Handle back navigation - clear verification response and reset state
+    val handleBackClick = {
+        viewModel.resetToInitial()
+        onBackClick()
+    }
 
-        when (uiState.verificationState) {
-            VerificationState.INITIAL -> {
-                InitialUploadContent(
-                    onImageSelect = { imagePickerLauncher.launch("image/*") },
-                    onVerifyClick = { viewModel.verifyImage() },
-                    onGuideClick = { viewModel.showGuide() },
-                    selectedImageUri = uiState.selectedImageUri
-                )
-            }
-            VerificationState.LOADING -> {
-                LoadingContent()
-            }
-            VerificationState.WARNING -> {
-                WarningContent(
-                    onUnderstoodClick = { viewModel.resetToInitial() },
-                    onReportClick = { viewModel.reportFraud() },
-                    ocrText = uiState.ocrText
-                )
-            }
-            VerificationState.SAFE -> {
-                SafeContent(
-                    onUnderstoodClick = { viewModel.resetToInitial() },
-                    onReportClick = { viewModel.reportSafe() },
-                    ocrText = uiState.ocrText
-                )
+    Scaffold{ padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFDF2E9))
+                .padding(WindowInsets.statusBars.asPaddingValues())
+        ) {
+            ScreenHeader(
+                title = "Kiểm tra",
+                onBackClick = handleBackClick
+            )
+
+            when (uiState.verificationState) {
+                VerificationState.INITIAL -> {
+                    InitialUploadContent(
+                        onImageSelect = { imagePickerLauncher.launch("image/*") },
+                        onVerifyClick = { viewModel.verifyImage() },
+                        onGuideClick = { viewModel.showGuide() },
+                        selectedImageUri = uiState.selectedImageUri
+                    )
+                }
+                VerificationState.LOADING -> {
+                    LoadingContent()
+                }
+                VerificationState.WARNING -> {
+                    // Navigate to ScamResultScreen for both WARNING and SAFE states
+                    LaunchedEffect(uiState.verificationResponse) {
+                        uiState.verificationResponse?.let { response ->
+                            onNavigateToScamResult(response)
+                        }
+                    }
+                    // Show loading while navigating
+                    LoadingContent()
+                }
+                VerificationState.SAFE -> {
+                    // Navigate to ScamResultScreen for both WARNING and SAFE states
+                    LaunchedEffect(uiState.verificationResponse) {
+                        uiState.verificationResponse?.let { response ->
+                            onNavigateToScamResult(response)
+                        }
+                    }
+                    // Show loading while navigating
+                    LoadingContent()
+                }
+                VerificationState.SCAM_RESULT -> {
+                    // This state is no longer used since we navigate to ScamResultScreen
+                    LoadingContent()
+                }
             }
         }
     }
@@ -127,26 +122,31 @@ private fun InitialUploadContent(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Title
         Text(
             text = "Chọn ảnh",
             fontSize = 24.sp,
-            color = Color.Gray,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp)
         )
+        
+        // Image selection area
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
+                .height(300.dp)
+                .padding(horizontal = 16.dp)
                 .border(
                     width = 2.dp,
                     color = Color(0xFF2196F3),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(12.dp)
                 )
                 .background(
-                    color = Color(0xFFE3F2FD),
-                    shape = RoundedCornerShape(8.dp)
+                    color = Color.White,
+                    shape = RoundedCornerShape(12.dp)
                 )
                 .clickable { onImageSelect() },
             contentAlignment = Alignment.Center
@@ -159,277 +159,78 @@ private fun InitialUploadContent(
                     contentScale = ContentScale.Fit
                 )
             } else {
-                Text(
-                    text = "BẤM VÀO ĐÂY ĐỂ TẢI\nẢNH LÊN",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF2196F3),
-                    lineHeight = 40.sp,
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Plus icon circle
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(
+                                color = Color(0xFF2196F3),
+                                shape = RoundedCornerShape(40.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add_circle),
+                            contentDescription = "Add image",
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Text below plus icon
+                    Text(
+                        text = "Bấm vào đây",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF2196F3),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Text(
+                        text = "để tải ảnh lên",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF2196F3),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onVerifyClick,
-            enabled = selectedImageUri != null,
-            modifier = Modifier
-                .width(300.dp)
-                .height(70.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2196F3)
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = "KIỂM TRA",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onGuideClick,
-            modifier = Modifier
-                .width(300.dp)
-                .height(70.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF37474F)
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = "HƯỚNG DẪN",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
+        
+        Spacer(modifier = Modifier.weight(1f))
 
-@Composable
-private fun WarningContent(
-    onUnderstoodClick: () -> Unit,
-    onReportClick: () -> Unit,
-    ocrText: String?
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "CẢNH BÁO !",
-            fontSize = 35.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFD32F2F),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = "Hệ thống phát hiện\nnội dung lừa đảo",
-            fontSize = 30.sp,
-            lineHeight = 36.sp,
-            color = Color.Black,
-            textAlign = TextAlign.Center
-        )
-        ocrText?.let {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Văn bản phát hiện: $it",
-                fontSize = 20.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-        Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = "Cảnh báo",
-            tint = Color(0xFFD32F2F),
-            modifier = Modifier.size(200.dp)
-        )
-        Spacer(modifier = Modifier.height(48.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+
+        // Send report button at bottom right
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+            FloatingActionButton(
+                onClick = onVerifyClick,
+                containerColor = if (selectedImageUri != null) Color(0xFF2196F3) else Color.Gray,
+                contentColor = Color.White,
+                modifier = Modifier.size(80.dp)
             ) {
-                Button(
-                    onClick = onUnderstoodClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Safe",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Tôi đã hiểu",
-                    fontSize = 24.sp,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    color = Color.DarkGray,
-                    modifier = Modifier.fillMaxWidth()
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_send),
+                    contentDescription = "Send report",
+                    modifier = Modifier.size(32.dp)
                 )
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = onReportClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1565C0)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.People,
-                        contentDescription = "Report",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Báo người thân",
-                    fontSize = 24.sp,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    color = Color.DarkGray,
-                    modifier = Modifier.fillMaxWidth()
-                )
+
             }
         }
     }
 }
 
-@Composable
-private fun SafeContent(
-    onUnderstoodClick: () -> Unit,
-    onReportClick: () -> Unit,
-    ocrText: String?
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "AN TOÀN !",
-            fontSize = 35.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Không phát hiện nội\ndung lừa đảo",
-            fontSize = 30.sp,
-            color = Color.Black,
-            lineHeight = 36.sp,
-            textAlign = TextAlign.Center
-        )
-        ocrText?.let { // Hiển thị OCR text nếu có
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Văn bản phát hiện: $it",
-                fontSize = 20.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = "An toàn",
-            tint = Color(0xFF4CAF50),
-            modifier = Modifier.size(200.dp)
-        )
-        Spacer(modifier = Modifier.height(48.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = onUnderstoodClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Safe",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Tôi đã hiểu",
-                    fontSize = 24.sp,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    color = Color.DarkGray,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = onReportClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1565C0)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.People,
-                        contentDescription = "Report",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Báo người thân",
-                    fontSize = 24.sp,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    color = Color.DarkGray,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
+
 
 @Composable
 private fun LoadingContent() {
@@ -451,10 +252,15 @@ private fun LoadingContent() {
     }
 }
 
+
+
 @Preview(showBackground = true)
 @Composable
 fun ImageVerificationScreenPreview() {
     TrustieTheme {
-        ImageVerificationScreen(onBackClick = {})
+        ImageVerificationScreen(
+            onBackClick = {},
+            onNavigateToScamResult = {}
+        )
     }
 }

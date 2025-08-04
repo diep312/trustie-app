@@ -2,15 +2,13 @@ package com.example.trustie.ui.screen.home
 
 
 import android.util.Log
-import androidx.compose.foundation.Image
+import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
@@ -18,8 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.components.FeatureCard
+import com.example.trustie.ui.components.NotificationButton
+import com.example.trustie.ui.components.ShieldIcon
 import com.example.trustie.data.model.FeatureItem
 import com.example.trustie.ui.theme.TrustieTheme
 import com.example.trustie.ui.screen.home.HomeViewModel
@@ -47,35 +45,35 @@ fun HomeScreen(
     val features = listOf(
         FeatureItem(
             title = "Lịch sử gọi",
-            icon = Icons.Default.Phone,
+            iconResId = R.drawable.ic_phone,
             backgroundColor = Color(0xFF2196F3),
             iconColor = Color.White,
             textColor = Color.White
         ),
         FeatureItem(
             title = "Báo cáo số",
-            icon = Icons.Default.Security,
+            iconResId = R.drawable.ic_shield_info,
             backgroundColor = Color(0xFFF44336),
             iconColor = Color.White,
             textColor = Color.White
         ),
         FeatureItem(
-            title = "Kết nối",
-            icon = Icons.Default.People,
+            title = "Kết nối người thân",
+            iconResId = R.drawable.ic_people,
             backgroundColor = Color(0xFF1565C0),
             iconColor = Color.White,
             textColor = Color.White
         ),
         FeatureItem(
             title = "Kiểm tra ảnh",
-            icon = Icons.Default.ImageSearch,
+            iconResId = R.drawable.ic_check_photo,
             backgroundColor = Color(0xFFFF9800),
             iconColor = Color.White,
             textColor = Color.White
         ),
         FeatureItem(
-            title = "Kiểm tra Số",
-            icon = Icons.Default.PhoneAndroid,
+            title = "Kiểm tra số",
+            iconResId = R.drawable.ic_phone_square,
             backgroundColor = Color(0xFF63B404),
             iconColor = Color.White,
             textColor = Color.White
@@ -117,224 +115,167 @@ fun HomeScreen(
             shape = RoundedCornerShape(12.dp)
         )
     }
-    Spacer(modifier = Modifier.height(16.dp))
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFFFDF2E9))
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+
+    Scaffold(modifier =
+        modifier.background(Color(0xFFFDF2E9))
+            .padding(16.dp, 0.dp))
+    { padding ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(WindowInsets.statusBars.asPaddingValues())
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.home_page1),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
+            Row(
                 modifier = Modifier
-                    .width(220.dp)
-                    .heightIn(max = 80.dp)
-                    .padding(8.dp)
-            )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onNotificationClick,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Thông báo",
-                        tint = Color(0xFF2196F3),
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
                 Text(
-                    text = "Thông báo",
-                    fontSize = 14.sp,
-                    color = Color(0xFF2196F3),
-                    fontWeight = FontWeight.Medium
+                    modifier = Modifier.weight(1.5f),
+                    text = "Chúc quý vị ngày an lành",
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
+                    lineHeight = 43.sp
+                )
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                NotificationButton(
+                    modifier = Modifier.weight(0.5f),
+                    onClick = onNotificationClick,
+                    hasUnreadNotifications = true
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
-        // User Welcome Section
-        currentUser?.let { user ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(125.dp)
                     .padding(bottom = 16.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE3F2FD),
+                    containerColor = Color(0xFF005893),
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Xin chào, ${user.name}!",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1976D2)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Email: ${user.email ?: "Không có email"}",
-                        fontSize = 14.sp,
-                        color = Color(0xFF424242)
-                    )
-                    Text(
-                        text = "Loại tài khoản: ${if (user.isElderly) "Người cao tuổi" else "Người thân"}",
-                        fontSize = 14.sp,
-                        color = Color(0xFF424242)
-                    )
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF005893),
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-//
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF005893),
-                                Color(0xFF1075AB),
-                                Color(0xFF0E85CE),
-                                Color(0xFF36AAF6),
-                                Color(0xFF68B9F5),
-                                Color(0xFF95CFFF)
-                            )
-                        )
-                    )
-            ) {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(Color(0xFF2E4A70))
                 ) {
-                    Text(
-                        text = "  BẬT BẢO VỆ AN TOÀN",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {  viewModel.toggleAlert() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF9800)
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.width(140.dp)
+                        Row(
                         ) {
                             Text(
-                                text = if (isAlertEnabled) "Đã bật" else "Bật ngay",
-                                fontSize = 20.sp,
+                                text = "Khiên bảo vệ chống lừa đảo",
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color.White,
+                                modifier = Modifier.weight(1f)
                             )
-                        }
 
-                        Image(
-                            painter = painterResource(id = R.drawable.ex_image1),
-                            contentDescription = "Hình minh họa",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(260.dp)
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+//                            ShieldIcon(
+//                                modifier = Modifier.size(32.dp),
+//                                color = Color.White.copy(alpha = 0.8f)
+//                            )
+                                Button(
+                                    onClick = { viewModel.toggleAlert() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isAlertEnabled) Color(0xFF4CAF50) else Color(0xFFFF9800)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(36.dp)
+                                ) {
+                                    Text(
+                                        text = if (isAlertEnabled) "Đã bật" else "Bật ngay",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
 
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(features.take(4)) { feature ->
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(features.take(4)) { feature ->
+                    FeatureCard(
+                        feature = feature,
+                        onClick = {
+                            Log.d("NavigationDebug", "Clicked on feature: ${feature.title}")
+                            onFeatureClick(feature)
+                        },
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .fillMaxWidth()
+                    )
+                }
+            }
+
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            features.getOrNull(4)?.let { feature ->
                 FeatureCard(
                     feature = feature,
-                    onClick = {
-                        Log.d("NavigationDebug", "Clicked on feature: ${feature.title}")
-                        onFeatureClick(feature)
-                    },
+                    onClick = { onFeatureClick(feature) },
                     modifier = Modifier
-                        .aspectRatio(1f)
                         .fillMaxWidth()
+                        .height(160.dp)
                 )
             }
-        }
+            Spacer(modifier = Modifier.height(16.dp))
 
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-        features.getOrNull(4)?.let { feature ->
-            FeatureCard(
-                feature = feature,
-                onClick = { onFeatureClick(feature) },
+            Button(
+                onClick = onLogoutClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onLogoutClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F)
-            ),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "Đăng xuất",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD32F2F)
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = "Đăng xuất",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
 
 
-@Preview(showBackground = true)
+@Preview(showBackground = false)
 @Composable
 fun HomeScreenPreview() {
     TrustieTheme {

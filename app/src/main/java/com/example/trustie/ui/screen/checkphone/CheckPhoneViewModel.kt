@@ -3,15 +3,21 @@ package com.example.trustie.ui.screen.checkphone
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.trustie.data.GlobalStateManager
 import com.example.trustie.data.model.PhoneCheckItem
+import com.example.trustie.data.model.response.PhoneCheckResponse
 import com.example.trustie.repository.phonerepo.PhoneRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CheckPhoneViewModel(
-    private val repository: PhoneRepository
+@HiltViewModel
+class CheckPhoneViewModel @Inject constructor(
+    private val repository: PhoneRepository,
+    private val globalStateManager: GlobalStateManager
 ) : ViewModel() {
 
     private val _phoneNumber = MutableStateFlow("")
@@ -56,8 +62,11 @@ class CheckPhoneViewModel(
             _errorMessage.value = null
 
             try {
-                Log.d("CheckPhoneDebug", "Checking phone number: $number")
-                val response = repository.checkPhoneNumber(number)
+                // Get user ID from global state
+                val userId = globalStateManager.getUserId()
+                Log.d("CheckPhoneDebug", "Checking phone number: $number with userId: $userId")
+                
+                val response = repository.checkPhoneNumber(number, userId)
 
                 // Convert PhoneCheckResponse to PhoneCheckItem
                 val phoneCheckItem = PhoneCheckItem(
@@ -87,14 +96,12 @@ class CheckPhoneViewModel(
     }
 
     private fun isValidPhoneNumber(number: String): Boolean {
-
         val cleanNumber = number.replace("\\s".toRegex(), "")
         return cleanNumber.matches(Regex("^(\\+84|84|0)[3-9][0-9]{8}$"))
     }
 
     fun startVoiceInput() {
         Log.d("CheckPhoneDebug", "Voice input requested")
-
         _errorMessage.value = "Tính năng nhập bằng giọng nói đang được phát triển"
     }
 }

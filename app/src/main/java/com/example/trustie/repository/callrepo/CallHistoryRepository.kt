@@ -1,7 +1,7 @@
 package com.example.trustie.repository.callrepo
 
-import com.example.trustie.data.model.CallHistoryItem
-import com.example.trustie.data.model.CallHistoryResponse
+import com.example.trustie.data.model.datamodel.CallHistoryItem
+import com.example.trustie.data.model.response.CallHistoryResponse
 import kotlinx.coroutines.delay
 
 class CallHistoryRepository {

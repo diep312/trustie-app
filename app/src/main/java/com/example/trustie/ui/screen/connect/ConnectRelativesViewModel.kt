@@ -5,13 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trustie.data.model.RelativeConnection
 import com.example.trustie.repository.connectrepo.ConnectionRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ConnectRelativesViewModel(
-    private val repository: ConnectionRepository = ConnectionRepository()
+@HiltViewModel
+class ConnectRelativesViewModel @Inject constructor(
+    private val repository: ConnectionRepository
 ) : ViewModel() {
 
     private val _qrCode = MutableStateFlow<String?>(null)

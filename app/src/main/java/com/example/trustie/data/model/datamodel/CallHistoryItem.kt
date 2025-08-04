@@ -1,4 +1,4 @@
-package com.example.trustie.data.model
+package com.example.trustie.data.model.datamodel
 
 data class CallHistoryItem(
     val id: String,
@@ -8,10 +8,4 @@ data class CallHistoryItem(
     val country: String = "Vietnam",
     val callType: String = "Cuộc gọi đến",
     val isSuspicious: Boolean = false
-)
-
-data class CallHistoryResponse(
-    val success: Boolean,
-    val data: List<CallHistoryItem>,
-    val message: String? = null
 )

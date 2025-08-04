@@ -8,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object BaseApiService {
-    private const val BASE_URL = BuildConfig.API_BASE_URL
+    private const val BASE_URL = "http://54.90.139.125/"
 
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {

@@ -1,6 +1,6 @@
 package com.example.trustie.data.api
 
-import com.example.trustie.data.model.CallHistoryItem
+import com.example.trustie.data.model.datamodel.CallHistoryItem
 import retrofit2.http.GET
 
 interface CallApiService {
