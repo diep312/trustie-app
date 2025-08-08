@@ -1,3 +1,4 @@
+
 package com.example.trustie.navigation
 
 import android.content.Context
@@ -26,6 +27,7 @@ import com.example.trustie.ui.screen.alert.IncomingCallAlertScreen
 import com.example.trustie.ui.screen.imagedetection.ImageVerificationScreen
 import com.example.trustie.ui.screen.scamresult.ScamResultScreen
 import com.example.trustie.ui.screen.notification.NotificationScreen
+import com.example.trustie.ui.screen.qrscanner.QRScannerScreen
 
 @Composable
 fun AppNavigation(
@@ -59,9 +61,7 @@ fun AppNavigation(
 
         composable(Screen.PhoneInput.route) {
             PhoneInputScreen(
-                onNavigateToOTP = {
-                    navController.navigate(Screen.OTPInput.route)
-                },
+                onNavigateToOTP = { navController.navigate(Screen.OTPInput.route) },
                 viewModel = authViewModel
             )
         }
@@ -73,9 +73,7 @@ fun AppNavigation(
                         popUpTo(Screen.PhoneInput.route) { inclusive = true }
                     }
                 },
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                onNavigateBack = { navController.popBackStack() },
                 viewModel = authViewModel
             )
         }
@@ -115,31 +113,36 @@ fun AppNavigation(
 
         composable(Screen.CallHistory.route) {
             CallHistoryScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
         composable(Screen.CheckPhone.route) {
             CheckPhoneScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
-        composable(Screen.ConnectRelatives.route) {
-            ConnectRelativesScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
+
 
         composable(Screen.ReportPhone.route) {
             ReportPhoneScreen(
-                onBackClick = {
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.ConnectRelatives.route) {
+            ConnectRelativesScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToQRScanner = {
+                    navController.navigate(Screen.QRScanner.route)
+                }
+            )
+        }
+
+        composable(Screen.QRScanner.route) {
+            QRScannerScreen(
+                onBackClick = { navController.popBackStack() },
+                onScanSuccess = {
                     navController.popBackStack()
                 }
             )
@@ -157,12 +160,8 @@ fun AppNavigation(
             IncomingCallAlertScreen(
                 phoneNumber = phoneNumber,
                 isSuspicious = isSuspicious,
-                onAcceptCall = {
-                    navController.popBackStack()
-                },
-                onDeclineCall = {
-                    navController.popBackStack()
-                }
+                onAcceptCall = { navController.popBackStack() },
+                onDeclineCall = { navController.popBackStack() }
             )
         }
 
