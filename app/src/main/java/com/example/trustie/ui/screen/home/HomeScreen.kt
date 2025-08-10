@@ -78,6 +78,13 @@ fun HomeScreen(
             iconColor = Color.White,
             textColor = Color.White
         ),
+        FeatureItem(
+            title="Nhận diện cuộc gọi lừa đảo",
+            iconResId = R.drawable.ic_phone_deny,
+            backgroundColor = Color(0xFF21B475),
+            iconColor = Color.White,
+            textColor = Color.White
+        )
     )
 
     if (showAlertDialog) {
@@ -122,7 +129,7 @@ fun HomeScreen(
     { padding ->
         Column(
             modifier = modifier
-                .fillMaxSize()
+                .fillMaxSize().background(Color(0xFFFDF2E9))
                 .padding(WindowInsets.statusBars.asPaddingValues())
         ) {
             Row(
@@ -224,7 +231,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(features.take(4)) { feature ->
+                items(features.take(6)) { feature ->
                     FeatureCard(
                         feature = feature,
                         onClick = {
@@ -239,18 +246,18 @@ fun HomeScreen(
             }
 
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-            features.getOrNull(4)?.let { feature ->
-                FeatureCard(
-                    feature = feature,
-                    onClick = { onFeatureClick(feature) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp)
-                )
-            }
+//            Spacer(modifier = Modifier.height(8.dp))
+//
+//
+//            features.getOrNull(4)?.let { feature ->
+//                FeatureCard(
+//                    feature = feature,
+//                    onClick = { onFeatureClick(feature) },
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .height(160.dp)
+//                )
+//            }
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(

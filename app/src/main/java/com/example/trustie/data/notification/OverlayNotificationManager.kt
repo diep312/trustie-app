@@ -19,106 +19,69 @@ class OverlayNotificationManager(context: Context) : BaseNotificationManager(con
 
 
     fun showCallScreenOverlay(phoneNumber: String, message: String, isHighRisk: Boolean) {
-        if (!hasOverlayPermission()) {
-            // Fallback to regular notification if overlay permission not granted
-            val callAlertManager = CallAlertNotificationManager(context)
-            callAlertManager.showCallAlert(phoneNumber, message, isHighRisk)
+        if (!isHighRisk) {
+            // Don't show overlay for low/medium risk
             return
         }
 
-        val title = if (isHighRisk) "Cảnh báo lừa đảo!" else "Xem thông tin cuộc gọi"
-        val channelId = if (isHighRisk) CHANNEL_ID_HIGH_PRIORITY else CHANNEL_ID_CALL_ALERT
+        if (!hasOverlayPermission()) {
+            // If no overlay permission, fall back to a regular high-priority notification
+            val callAlertManager = CallAlertNotificationManager(context)
+            callAlertManager.showCallAlert(phoneNumber, message, true)
+            return
+        }
 
-        val builder = createNotificationBuilder(channelId, title, message)
+        val title = "🚨 CẢNH BÁO CUỘC GỌI NGUY HIỂM"
+        val warningMessage = "$phoneNumber\n$message\n\n" +
+                "📢 Ông/Bà hãy thận trọng! Không cung cấp thông tin cá nhân hoặc chuyển tiền."
+
+        val builder = createNotificationBuilder(CHANNEL_ID_HIGH_PRIORITY, title, warningMessage)
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setContentTitle(title)
-            .setContentText("$phoneNumber\n$message")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$phoneNumber\n$message"))
-            .setColor(if (isHighRisk) Color.RED else Color.GREEN)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(warningMessage))
+            .setColor(Color.RED)
             .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000))
-            .setLights(if (isHighRisk) Color.RED else Color.GREEN, 1000, 1000)
+            .setLights(Color.RED, 1000, 1000)
             .setOngoing(true)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-//            .setFullScreenIntent(createFullScreenPendingIntent(phoneNumber), true)
 
-//        // Add action buttons
-//        val checkIntent = Intent(context, CheckPhoneScreen()::class.java).apply {
-//            putExtra("phone_number", phoneNumber)
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-//        }
-//
-//        val checkPendingIntent = PendingIntent.getActivity(
-//            context, 1, checkIntent,
-//            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-//                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-//            } else {
-//                PendingIntent.FLAG_UPDATE_CURRENT
-//            }
-//        )
-//
-//        builder.addAction(
-//            R.drawable.ic_check_number,
-//            "Check Details",
-//            checkPendingIntent
-//        )
-
-        // Add block action for high risk calls
-        if (isHighRisk) {
-            val blockIntent = Intent(context, OverlayNotificationManager::class.java).apply {
-                action = "BLOCK_CALL"
-                putExtra("phone_number", phoneNumber)
-            }
-
-            val blockPendingIntent = PendingIntent.getBroadcast(
-                context, 3, blockIntent,
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
-            )
-
-            builder.addAction(
-                R.drawable.ic_shield,
-                "Block Call",
-                blockPendingIntent
-            )
+        // Confirm/Receive call action
+        val confirmIntent = Intent(context, OverlayNotificationManager::class.java).apply {
+            action = "CONFIRM_CALL"
+            putExtra("phone_number", phoneNumber)
         }
-
-        // Add dismiss action
-        val dismissIntent = Intent(context, OverlayNotificationManager::class.java).apply {
-            action = "DISMISS_OVERLAY"
-            putExtra("notification_id", NOTIFICATION_ID_CALL_OVERLAY)
-        }
-
-        val dismissPendingIntent = PendingIntent.getBroadcast(
-            context, 2, dismissIntent,
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        val confirmPendingIntent = PendingIntent.getBroadcast(
+            context, 4, confirmIntent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
         )
+        builder.addAction(R.drawable.ic_phone, "Nhận Cuộc Gọi", confirmPendingIntent)
 
-        builder.addAction(
-            R.drawable.ic_arrow_left,
-            "Dismiss",
-            dismissPendingIntent
+        // Dismiss action
+        val dismissIntent = Intent(context, OverlayNotificationManager::class.java).apply {
+            action = "DISMISS_OVERLAY"
+            putExtra("notification_id", NOTIFICATION_ID_CALL_OVERLAY)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context, 2, dismissIntent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
         )
+        builder.addAction(R.drawable.ic_phone_deny, "Bỏ Qua", dismissPendingIntent)
 
         showNotification(NOTIFICATION_ID_CALL_OVERLAY, builder)
-
-        // Show additional urgent alert for high risk calls
-        if (isHighRisk) {
-            showUrgentAlert(phoneNumber, message)
-        }
     }
 
     private fun showUrgentAlert(phoneNumber: String, message: String) {
         val builder = createNotificationBuilder(
             CHANNEL_ID_HIGH_PRIORITY,
-            "🚨 URGENT: Potential Scam Call",
+            "🚨 NGUY CƠ: Cuộc gọi có nguy cơ lừa đảo",
             "$phoneNumber\n$message"
         ).apply {
             setPriority(NotificationCompat.PRIORITY_MAX)

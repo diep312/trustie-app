@@ -115,7 +115,7 @@ fun CallHistoryCard(
                     Text(
                         text = statusText,
                         color = Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )

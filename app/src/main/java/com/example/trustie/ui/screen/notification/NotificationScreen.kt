@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.components.NotificationCard
-import com.example.trustie.ui.components.ScreenHeader
 import com.example.trustie.ui.theme.TrustieTheme
 import com.example.trustie.ui.screen.notification.NotificationViewModel
 
@@ -38,13 +37,36 @@ fun NotificationScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFDF2E9))
-
     ) {
-        Spacer(modifier = Modifier.height(50.dp))
-        ScreenHeader(
-            title = "Thông báo",
-            onBackClick = onBackClick,
+        // Header
+        TopAppBar(
+            title = {
+                Text(
+                    text = "THÔNG BÁO",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2196F3)
+                )
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(60.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.back_buttonn),
+                        contentDescription = "Back",
+                        modifier = Modifier
+                            .size(120.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color(0xFFFDF2E9)
+            )
         )
+
         when {
             isLoading -> {
                 Box(
@@ -56,6 +78,7 @@ fun NotificationScreen(
                     )
                 }
             }
+
             errorMessage != null -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),

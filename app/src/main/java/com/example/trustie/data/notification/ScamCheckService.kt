@@ -89,21 +89,54 @@ class ScamCheckService : Service() {
             }
         }
     }
-    
+
     private fun handlePhoneCheckResult(response: PhoneCheckResponse, phoneNumber: String) {
         val isFlagged = response.isFlagged ?: false
         val riskLevel = response.riskScore ?: 0
+        val isFound = response.found ?: false
         val description = response.info ?: "Không có thông tin chi tiết..."
-        
-        Log.d(TAG, "Phone check result - Flagged: $isFlagged, Risk: $riskLevel")
-        
-        if (isFlagged) {
-            showCallAlertNotification(phoneNumber, "⚠️ Đã nhận diện cuộc gọi có khả năng lừa đảo! Mức độ nguy hại: $riskLevel", true)
-        } else {
-            showCallAlertNotification(phoneNumber, "✅ Số điện thoại an toàn", false)
+
+        Log.d(TAG, "Phone check result - Found: $isFound, Flagged: $isFlagged, Risk: $riskLevel")
+
+        val isHighRisk = isFlagged && riskLevel >= 80
+
+        when {
+            isHighRisk -> {
+                showCallAlertNotification(
+                    phoneNumber,
+                    "⚠️ Cảnh báo: Cuộc gọi lừa đảo mức độ NGHIÊM TRỌNG! Mức độ nguy hại: $riskLevel",
+                    true // full-screen overlay
+                )
+            }
+
+            isFlagged -> {
+                showCallAlertNotification(
+                    phoneNumber,
+                    "⚠️ Đã nhận diện cuộc gọi có khả năng lừa đảo. Mức độ nguy hại: $riskLevel",
+                    false // normal notification
+                )
+            }
+
+            !isFound -> {
+                showCallAlertNotification(
+                    phoneNumber,
+                    "⚠️ Số này chưa có trong cơ sở dữ liệu. Ông/Bà hãy cẩn thận.",
+                    false // normal notification
+                )
+            }
+
+            else -> {
+                showCallAlertNotification(
+                    phoneNumber,
+                    "✅ Số điện thoại an toàn",
+                    false
+                )
+            }
         }
     }
-    
+
+
+
     private fun showCallAlertNotification(phoneNumber: String, message: String, isHighRisk: Boolean) {
         val overlayManager = OverlayNotificationManager(this)
         overlayManager.showCallScreenOverlay(phoneNumber, message, isHighRisk)

@@ -1,20 +1,8 @@
 package com.example.trustie.utils
 
 object UserUtils {
-    // Mock user data - replace with actual user data from SharedPreferences or database
-    fun getCurrentUserId(): Int {
-        return 123 // Replace with actual user ID
+    // This is a temporary solution - in a real app, this would come from GlobalStateManager
+    fun getCurrentUserId(): String {
+        return "123" // Placeholder user ID
     }
-
-    fun getCurrentUserName(): String {
-        return "Người thân" // Replace with actual user name
-    }
-
-    fun getCurrentUserPhone(): String {
-        return "0987654321" // Replace with actual user phone
-    }
-
-    fun getCurrentUserEmail(): String {
-        return "nguoithan@example.com" // Replace with actual user email
-    }
-}
+} 
