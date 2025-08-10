@@ -1,15 +1,15 @@
+
 package com.example.trustie.ui.screen.scamresult
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,8 +25,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.data.model.response.ImageVerificationResponse
+import com.example.trustie.data.model.response.getEffectiveRiskLevel
+import com.example.trustie.data.model.response.getEffectiveConfidence
+import com.example.trustie.data.model.response.getReadableAnalysis
+import com.example.trustie.data.model.response.getRecommendations
 import com.example.trustie.ui.components.ScreenHeader
 import com.example.trustie.ui.theme.TrustieTheme
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,18 +39,54 @@ fun ScamResultScreen(
     onBackClick: () -> Unit,
     viewModel: ScamResultViewModel = hiltViewModel()
 ) {
-    val verificationResponse by viewModel.verificationResponse.collectAsState()
-    val isHighRisk = verificationResponse?.llmAnalysis?.riskLevel?.uppercase() == "HIGH"
+    // Get response from GlobalStateManager via ViewModel
+    val currentResponse by viewModel.verificationResponse.collectAsState()
+
+    Log.d("ScamResultScreen", "ScamResultScreen composed. Response: ${currentResponse != null}")
+
+    // If no response available, show loading instead of going back immediately
+    if (currentResponse == null) {
+        Log.w("ScamResultScreen", "No verification response available, showing loading...")
+
+        // Show loading screen instead of going back
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp),
+                color = Color(0xFF2196F3)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Đang tải kết quả...",
+                fontSize = 16.sp,
+                color = Color.Black
+            )
+        }
+        return
+    }
+
+    // Use currentResponse (guaranteed non-null here)
+    val response = currentResponse!!
+    val effectiveRiskLevel = response.getEffectiveRiskLevel().uppercase()
+    val isHighRisk = effectiveRiskLevel == "HIGH" || effectiveRiskLevel == "MEDIUM"
     val isSpeaking by viewModel.isSpeaking.collectAsState()
     val isAudioPlaying by remember { derivedStateOf { viewModel.isAudioPlaying() } }
-    
-    // Handle back navigation - clear the verification response when going back
+
+    Log.d("ScamResultScreen", "Showing result for risk level: $effectiveRiskLevel")
+    Log.d("ScamResultScreen", "Confidence: ${response.getEffectiveConfidence()}")
+
+    // Handle back navigation - DON'T clear verification response here
     val handleBackClick = {
-        viewModel.clearVerificationResponse()
+        Log.d("ScamResultScreen", "Back button pressed. Going back without clearing response.")
         onBackClick()
     }
 
-    Scaffold{padding ->
+    Scaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,7 +106,7 @@ fun ScamResultScreen(
                     onResumeAudio = { viewModel.resumeAudio() },
                     isSpeaking = isSpeaking,
                     isAudioPlaying = isAudioPlaying,
-                    verificationResponse = verificationResponse
+                    verificationResponse = response
                 )
             } else {
                 SafeContent(
@@ -76,7 +117,7 @@ fun ScamResultScreen(
                     onResumeAudio = { viewModel.resumeAudio() },
                     isSpeaking = isSpeaking,
                     isAudioPlaying = isAudioPlaying,
-                    verificationResponse = verificationResponse
+                    verificationResponse = response
                 )
             }
         }
@@ -92,108 +133,208 @@ private fun WarningContent(
     onResumeAudio: () -> Unit,
     isSpeaking: Boolean,
     isAudioPlaying: Boolean,
-    verificationResponse: ImageVerificationResponse?
+    verificationResponse: ImageVerificationResponse
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Warning title
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Text(
-                text = "Cảnh báo!",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFFD32F2F),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 24.dp)
-            )
-
-            // Warning logo
-            Image(
-                painter = painterResource(id = R.drawable.img_warning_logo),
-                contentDescription = "Warning logo",
-                modifier = Modifier.size(200.dp),
-                contentScale = ContentScale.Fit
-            )
-
-            // Description
-            Text(
-                text = "Hệ thống phát hiện nội dung lừa đảo",
-                fontSize = 18.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Action buttons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // AI Analysis button
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+        item {
+            // Warning title
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                Button(
-                    onClick = if (isSpeaking) onStopAudio else onAiAnalysisClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSpeaking) Color(0xFFD32F2F) else Color(0xFF2196F3)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = if (isSpeaking) Icons.Default.Stop else Icons.Default.QuestionMark,
-                        contentDescription = if (isSpeaking) "Stop Audio" else "AI Analysis",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
+                    Text(
+                        text = "Cảnh báo!",
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFFD32F2F),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 24.dp)
                     )
 
+                    // Warning logo
+                    Image(
+                        painter = painterResource(id = R.drawable.img_warning_logo),
+                        contentDescription = "Warning logo",
+                        modifier = Modifier.size(200.dp),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    // Description
                     Text(
-                        text = if (isSpeaking) "Dừng phát" else "AI phân tích",
+                        text = "Hệ thống phát hiện nội dung lừa đảo",
+                        fontSize = 18.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+
+                    // Risk level and confidence
+                    Text(
+                        text = "Mức độ rủi ro: ${verificationResponse.getEffectiveRiskLevel()}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = Color.White
+                        color = Color(0xFFD32F2F)
                     )
+
+                    verificationResponse.getEffectiveConfidence()?.let { confidence ->
+                        Text(
+                            text = "Độ tin cậy: $confidence%",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Show detailed analysis if available
+        val readableAnalysis = verificationResponse.getReadableAnalysis()
+        if (readableAnalysis.isNotEmpty() && readableAnalysis != "Không có thông tin phân tích") {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Phân tích chi tiết:",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD32F2F)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = readableAnalysis,
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+        }
+
+        // Show recommendations if available
+        val recommendations = verificationResponse.getRecommendations()
+        if (recommendations.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Khuyến nghị:",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1976D2)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
 
-            // Contact Relatives button
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = onContactRelativesClick,
-                    modifier = Modifier.size(140.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1565C0)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+            items(recommendations) { recommendation ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_people),
-                        contentDescription = "Contact Relatives",
-                        modifier = Modifier.size(80.dp)
-                    )
-
                     Text(
-                        text = "Liên hệ người thân",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = Color.White
+                        text = "• $recommendation",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(12.dp)
                     )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Action buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // AI Analysis button
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        onClick = if (isSpeaking) onStopAudio else onAiAnalysisClick,
+                        modifier = Modifier.size(140.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSpeaking) Color(0xFFD32F2F) else Color(0xFF2196F3)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.Stop else Icons.Default.QuestionMark,
+                                contentDescription = if (isSpeaking) "Stop Audio" else "AI Analysis",
+                                tint = Color.White,
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "AI phân tích",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
+                // Contact Relatives button
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        onClick = onContactRelativesClick,
+                        modifier = Modifier.size(140.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1565C0)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_people),
+                                contentDescription = "Contact Relatives",
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Liên hệ người thân",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -209,7 +350,7 @@ private fun SafeContent(
     onResumeAudio: () -> Unit,
     isSpeaking: Boolean,
     isAudioPlaying: Boolean,
-    verificationResponse: ImageVerificationResponse?
+    verificationResponse: ImageVerificationResponse
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -217,35 +358,58 @@ private fun SafeContent(
     ) {
         // Safe title
         Card(
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Text(
-                text = "An toàn!",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 24.dp)
-            )
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "An toàn!",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4CAF50),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
 
-            // Safe logo
-            Image(
-                painter = painterResource(id = R.drawable.img_safe),
-                contentDescription = "Safe logo",
-                modifier = Modifier.size(200.dp),
-                contentScale = ContentScale.Fit
-            )
+                // Safe logo
+                Image(
+                    painter = painterResource(id = R.drawable.img_safe),
+                    contentDescription = "Safe logo",
+                    modifier = Modifier.size(200.dp),
+                    contentScale = ContentScale.Fit
+                )
 
-            // Description
-            Text(
-                text = "Hệ thống không phát hiện\nnội dung lừa đảo",
-                fontSize = 18.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
+                // Description
+                Text(
+                    text = "Hệ thống không phát hiện\nnội dung lừa đảo",
+                    fontSize = 18.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+
+                // Risk level and confidence
+                Text(
+                    text = "Mức độ rủi ro: ${verificationResponse.getEffectiveRiskLevel()}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4CAF50)
+                )
+
+                verificationResponse.getEffectiveConfidence()?.let { confidence ->
+                    Text(
+                        text = "Độ tin cậy: $confidence%",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
         }
-
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -269,22 +433,25 @@ private fun SafeContent(
                     ),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Icon(
-                        imageVector = if (isSpeaking) Icons.Default.Stop else Icons.Default.QuestionMark,
-                        contentDescription = if (isSpeaking) "Stop Audio" else "AI Analysis",
-                        tint = Color.White,
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Text(
-                        text = if (isSpeaking) "Dừng phát" else "AI phân tích",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = Color.White
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = if (isSpeaking) Icons.Default.Stop else Icons.Default.QuestionMark,
+                            contentDescription = if (isSpeaking) "Stop Audio" else "AI Analysis",
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "AI phân tích",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color.White
+                        )
+                    }
                 }
-
             }
 
             // Contact Relatives button
@@ -300,22 +467,24 @@ private fun SafeContent(
                     ),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_people),
-                        contentDescription = "Contact Relatives",
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Text(
-                        text = "Liên hệ người thân",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = Color.White
-                    )
-
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_people),
+                            contentDescription = "Contact Relatives",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Liên hệ người thân",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color.White
+                        )
+                    }
                 }
-
             }
         }
     }
@@ -326,7 +495,8 @@ private fun SafeContent(
 fun ScamResultScreenPreview() {
     TrustieTheme {
         ScamResultScreen(
-            onBackClick = {},
+            onBackClick = {}
         )
     }
-} 
+}
+

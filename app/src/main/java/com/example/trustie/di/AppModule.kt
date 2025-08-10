@@ -1,5 +1,7 @@
+
 package com.example.trustie.di
 
+import android.content.Context
 import com.example.trustie.repository.authrepo.AuthRepository
 import com.example.trustie.repository.authrepo.AuthRepositoryImpl
 import com.example.trustie.repository.phonerepo.PhoneRepository
@@ -11,7 +13,6 @@ import com.example.trustie.repository.ttsrepo.TextToSpeechRepositoryImpl
 import com.example.trustie.repository.connectrepo.ConnectionRepository
 import com.example.trustie.repository.callrepo.CallHistoryRepository
 import com.example.trustie.repository.reportrepo.ReportRepository
-import android.content.Context
 import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
@@ -24,25 +25,25 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AppModule {
-    
+
     @Binds
     @Singleton
     abstract fun bindAuthRepository(
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindPhoneRepository(
         phoneRepositoryImpl: PhoneRepositoryImpl
     ): PhoneRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindImageVerificationRepository(
         imageVerificationRepositoryImpl: ImageVerificationRepositoryImpl
     ): ImageVerificationRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindTextToSpeechRepository(
@@ -53,34 +54,34 @@ abstract class AppModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModuleObject {
-    
+
     @Provides
     @Singleton
     fun provideGson(): Gson {
         return Gson()
     }
-    
+
     @Provides
     @Singleton
     fun provideContext(@ApplicationContext context: Context): Context {
         return context
     }
-    
+
     @Provides
     @Singleton
     fun provideConnectionRepository(): ConnectionRepository {
         return ConnectionRepository()
     }
-    
+
     @Provides
     @Singleton
     fun provideCallHistoryRepository(): CallHistoryRepository {
         return CallHistoryRepository()
     }
-    
+
     @Provides
     @Singleton
     fun provideReportRepository(): ReportRepository {
         return ReportRepository()
     }
-} 
+}

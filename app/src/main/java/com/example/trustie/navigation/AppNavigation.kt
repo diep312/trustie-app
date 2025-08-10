@@ -2,6 +2,7 @@
 package com.example.trustie.navigation
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,7 +31,7 @@ import com.example.trustie.ui.screen.notification.NotificationScreen
 import com.example.trustie.ui.screen.qrscanner.QRScannerScreen
 
 @Composable
-fun AppNavigation(
+fun     AppNavigation(
     navController: NavHostController,
     authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
@@ -164,7 +165,6 @@ fun AppNavigation(
                 onDeclineCall = { navController.popBackStack() }
             )
         }
-
         composable(Screen.CheckImage.route) {
             ImageVerificationScreen(
                 onBackClick = { navController.popBackStack() },
@@ -173,7 +173,6 @@ fun AppNavigation(
                 }
             )
         }
-
         composable(Screen.ScamResult.route) {
             ScamResultScreen(
                 onBackClick = { navController.popBackStack() }
