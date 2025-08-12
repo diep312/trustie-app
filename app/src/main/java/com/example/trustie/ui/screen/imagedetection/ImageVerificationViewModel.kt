@@ -1,3 +1,4 @@
+
 package com.example.trustie.ui.screen.imagedetection
 
 import android.net.Uri
@@ -9,12 +10,11 @@ import com.example.trustie.data.model.ImageVerificationUiState
 import com.example.trustie.data.model.VerificationState
 import com.example.trustie.data.model.request.ImageVerificationRequest
 import com.example.trustie.repository.imagerepo.ImageVerificationRepository
-import kotlinx.coroutines.delay
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,12 +22,17 @@ class ImageVerificationViewModel @Inject constructor(
     private val repository: ImageVerificationRepository,
     private val globalStateManager: GlobalStateManager
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(ImageVerificationUiState())
     val uiState: StateFlow<ImageVerificationUiState> = _uiState.asStateFlow()
 
+    // Flag to control navigation - prevent navigation loop
+    private var hasNavigated = false
+
     init {
         Log.d("ImageVerificationDebug", "ImageVerificationViewModel initialized")
+        // Always start with clean state
+        resetToInitial()
     }
 
     fun selectImage(uri: Uri?) {
@@ -36,7 +41,9 @@ class ImageVerificationViewModel @Inject constructor(
             selectedImageUri = uri?.toString(),
             verificationState = VerificationState.INITIAL,
             errorMessage = null,
-            ocrText = null
+            ocrText = null,
+            verificationResponse = null,
+            isLoading = false
         )
     }
 
@@ -44,77 +51,100 @@ class ImageVerificationViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("ImageVerificationDebug", "verifyImage called")
             val currentImageUri = _uiState.value.selectedImageUri
-            if (currentImageUri == null) {
-                _uiState.value = _uiState.value.copy(errorMessage = "Vui lòng chọn ảnh để kiểm tra.")
+
+            if (currentImageUri.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Vui lòng chọn ảnh để kiểm tra."
+                )
                 return@launch
             }
 
-            // Get user ID from global state
             val userId = globalStateManager.getUserId() ?: 1
-            Log.d("ImageVerificationDebug", "Using userId: $userId for image verification.")
+            Log.d("ImageVerificationDebug", "Starting verification with userId: $userId")
 
+            // Set loading state
             _uiState.value = _uiState.value.copy(
                 verificationState = VerificationState.LOADING,
                 isLoading = true,
                 errorMessage = null,
-                ocrText = null
+                verificationResponse = null
             )
 
-            // Create request object
             val request = ImageVerificationRequest(
                 userId = userId,
-                description = "Image verification request",
+                description = "Image verification request from app",
                 imageUri = currentImageUri
             )
 
-            val result = repository.verifyImage(request)
-            result.onSuccess { response ->
-                Log.d("ImageVerificationDebug", "Verification response received: $response")
-                
-                // Store the response in GlobalStateManager for ScamResultScreen
-                globalStateManager.setVerificationResponse(response)
-                
-                // For now, we'll keep the old states for backward compatibility
-                // The actual navigation to ScamResultScreen will be handled in the UI
-                val nextState = when (response.llmAnalysis.riskLevel.uppercase()) {
-                    "HIGH" -> VerificationState.WARNING
-                    "MEDIUM" -> VerificationState.WARNING
-                    "LOW" -> VerificationState.SAFE
-                    else -> VerificationState.SAFE
+            try {
+                Log.d("ImageVerificationDebug", "Calling repository.verifyImage...")
+                val result = repository.verifyImage(request)
+
+                result.onSuccess { response ->
+                    Log.d("ImageVerificationDebug", "SUCCESS: Got response from repository")
+                    Log.d("ImageVerificationDebug", "Risk Level: ${response.llmAnalysis.riskLevel}")
+                    Log.d("ImageVerificationDebug", "Confidence: ${response.llmAnalysis.confidence}")
+
+                    // Store in GlobalStateManager
+                    globalStateManager.setVerificationResponse(response)
+                    Log.d("ImageVerificationDebug", "Stored response in GlobalStateManager")
+
+                    // Update UI state with response - this will trigger navigation
+                    _uiState.value = _uiState.value.copy(
+                        verificationState = VerificationState.INITIAL, // Reset to initial
+                        isLoading = false,
+                        ocrText = response.ocrText,
+                        verificationResponse = response, // This triggers navigation
+                        errorMessage = null
+                    )
+
+                    Log.d("ImageVerificationDebug", "Updated UI state with response")
+
+                }.onFailure { e ->
+                    Log.e("ImageVerificationDebug", "FAILURE: ${e.message}", e)
+                    _uiState.value = _uiState.value.copy(
+                        verificationState = VerificationState.INITIAL,
+                        isLoading = false,
+                        errorMessage = e.message ?: "Lỗi không xác định",
+                        verificationResponse = null
+                    )
                 }
-                
-                _uiState.value = _uiState.value.copy(
-                    verificationState = nextState,
-                    isLoading = false,
-                    ocrText = response.ocrText,
-                    verificationResponse = response
-                )
-                Log.d("ImageVerificationDebug", "Verification finished. State: $nextState, Risk Level: ${response.llmAnalysis.riskLevel}")
-            }.onFailure { e ->
+            } catch (e: Exception) {
+                Log.e("ImageVerificationDebug", "EXCEPTION: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     verificationState = VerificationState.INITIAL,
                     isLoading = false,
-                    errorMessage = "Lỗi kết nối: ${e.message}"
+                    errorMessage = "Lỗi không mong muốn: ${e.message}",
+                    verificationResponse = null
                 )
-                Log.e("ImageVerificationDebug", "Verification failed: ${e.message}", e)
             }
         }
     }
 
-    fun showGuide() {
-        Log.d("ImageVerificationDebug", "showGuide called")
+    fun clearResponseAfterNavigation() {
+        Log.d("ImageVerificationDebug", "clearResponseAfterNavigation called")
+        _uiState.value = _uiState.value.copy(
+            verificationResponse = null
+        )
     }
 
     fun resetToInitial() {
         Log.d("ImageVerificationDebug", "resetToInitial called")
         globalStateManager.clearVerificationResponse()
         _uiState.value = ImageVerificationUiState()
+        // Reset navigation flag
+        hasNavigated = false
+    }
+
+    fun showGuide() {
+        Log.d("ImageVerificationDebug", "showGuide called")
+        // TODO: Implement guide
     }
 
     fun reportFraud() {
         viewModelScope.launch {
             Log.d("ImageVerificationDebug", "reportFraud called")
-            delay(1000)
+            // TODO: Implement actual fraud reporting logic
             resetToInitial()
             Log.d("ImageVerificationDebug", "Fraud reported and reset to initial.")
         }
@@ -123,9 +153,25 @@ class ImageVerificationViewModel @Inject constructor(
     fun reportSafe() {
         viewModelScope.launch {
             Log.d("ImageVerificationDebug", "reportSafe called")
-            delay(1000)
+            // TODO: Implement actual safe reporting logic
             resetToInitial()
             Log.d("ImageVerificationDebug", "Safe reported and reset to initial.")
         }
     }
+
+    // Function to check and set navigation flag
+    fun shouldNavigate(): Boolean {
+        return if (!hasNavigated) {
+            hasNavigated = true
+            true
+        } else {
+            false
+        }
+    }
+
+    // Function to reset navigation flag when needed
+    fun resetNavigationFlag() {
+        hasNavigated = false
+    }
 }
+

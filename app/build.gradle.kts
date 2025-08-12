@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("kotlin-kapt") // Bắt buộc cho Hilt
     id("com.google.dagger.hilt.android") // Plugin Hilt
+    id("kotlin-parcelize")
 }
 
 android {
