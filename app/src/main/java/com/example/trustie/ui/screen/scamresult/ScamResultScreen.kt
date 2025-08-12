@@ -90,7 +90,7 @@ fun ScamResultScreen(
     Scaffold { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().background(Color(0xFFF8F5F2)) // Light background
                 .verticalScroll(rememberScrollState())
                 .padding(WindowInsets.statusBars.asPaddingValues())
         ) {
@@ -172,7 +172,7 @@ private fun WarningContent(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
+                
                 Text(
                     text = "Hệ thống phát hiện nội dung lừa đảo",
                     fontSize = 18.sp,
@@ -441,6 +441,7 @@ private fun SafeContent(
                         Text(
                             text = "AI phân tích",
                             fontSize = 14.sp,
+
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                             color = Color.White
@@ -462,7 +463,7 @@ private fun SafeContent(
                     ),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Image(
                             painter = painterResource(R.drawable.ic_people),
                             contentDescription = "Contact Relatives",
@@ -472,6 +473,7 @@ private fun SafeContent(
                         Text(
                             text = "Liên hệ người thân",
                             fontSize = 14.sp,
+
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                             color = Color.White

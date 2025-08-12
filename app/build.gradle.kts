@@ -91,11 +91,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
-    // Camera
-    implementation("androidx.camera:camera-core:1.3.0")
-    implementation("androidx.camera:camera-camera2:1.3.0")
-    implementation("androidx.camera:camera-lifecycle:1.3.0")
-    implementation("androidx.camera:camera-view:1.3.0")
+
     // Coil for image loading
     implementation(libs.coil.compose)
     
@@ -105,7 +101,6 @@ dependencies {
     // QR Code generation
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
     // Testing
     testImplementation(libs.junit)

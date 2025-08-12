@@ -24,7 +24,8 @@ fun NotificationCard(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFDBD5E8)        ),
+            containerColor = Color(0xFF2196F3)
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -34,9 +35,9 @@ fun NotificationCard(
         ) {
             Text(
                 text = notification.title,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Black,
-                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
@@ -47,21 +48,21 @@ fun NotificationCard(
             ) {
                 Text(
                     text = notification.phoneNumber,
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Black
+                    fontSize = 24.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Text(
                     text = notification.time,
-                    fontSize = 16.sp,
-                    color = Color.Gray.copy(alpha = 0.8f)
+                    fontSize = 24.sp,
+                    color = Color.White.copy(alpha = 0.8f)
                 )
 
                 Text(
                     text = notification.location,
                     fontSize = 14.sp,
-                    color = Color.Gray.copy(alpha = 0.8f)
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
         }

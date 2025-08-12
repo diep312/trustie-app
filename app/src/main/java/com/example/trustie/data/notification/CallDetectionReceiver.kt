@@ -43,12 +43,10 @@ class CallDetectionReceiver : BroadcastReceiver() {
         
         when (state) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
-                if (lastState != TelephonyManager.CALL_STATE_RINGING) {
-                    lastState = TelephonyManager.CALL_STATE_RINGING
-                    phoneNumber?.let { number ->
-                        Log.d(TAG, "Incoming call detected: $number")
-                        checkPhoneNumberForScam(context, number)
-                    }
+                lastState = TelephonyManager.CALL_STATE_RINGING
+                phoneNumber?.let { number ->
+                    Log.d(TAG, "Incoming call detected: $number")
+                    checkPhoneNumberForScam(context, number)
                 }
             }
             TelephonyManager.EXTRA_STATE_OFFHOOK -> {
