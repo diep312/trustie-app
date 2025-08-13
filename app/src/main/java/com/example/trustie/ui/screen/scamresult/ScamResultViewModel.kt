@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trustie.data.GlobalStateManager
 import com.example.trustie.data.model.response.ImageVerificationResponse
+import com.example.trustie.data.model.response.ScamAnalysisResponse
 import com.example.trustie.data.model.response.getReadableAnalysis
 import com.example.trustie.data.model.response.getRecommendations
 import com.example.trustie.data.model.response.getEffectiveRiskLevel
@@ -26,6 +27,9 @@ class ScamResultViewModel @Inject constructor(
     private val globalStateManager: GlobalStateManager
 ) : ViewModel() {
 
+    private val _resultData = MutableStateFlow<ScamResultData?>(null)
+    val resultData: StateFlow<ScamResultData?> = _resultData.asStateFlow()
+
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
 
@@ -33,43 +37,47 @@ class ScamResultViewModel @Inject constructor(
     val audioFilePath: StateFlow<String?> = _audioFilePath.asStateFlow()
 
     // Get verification response from GlobalStateManager
-    val verificationResponse: StateFlow<ImageVerificationResponse?> = globalStateManager.verificationResponse
+    val scamResultData: StateFlow<ScamResultData?> = globalStateManager.scamResultData
 
-    fun setVerificationResponse(response: ImageVerificationResponse) {
-        globalStateManager.setVerificationResponse(response)
-        Log.d("ScamResultViewModel", "Set verification response: ${response.getEffectiveRiskLevel()}")
-        Log.d("ScamResultViewModel", "Effective confidence: ${response.getEffectiveConfidence()}")
-    }
-
-    fun clearVerificationResponse() {
-        globalStateManager.clearVerificationResponse()
-        Log.d("ScamResultViewModel", "Cleared verification response")
-    }
 
     fun speakAnalysis() {
         viewModelScope.launch {
             _isSpeaking.value = true
             try {
-                val response = verificationResponse.value
-                if (response != null) {
-                    val speechText = buildSpeechText(response)
-
-                    Log.d("ScamResultViewModel", "Speaking text: $speechText")
+                val result = scamResultData.value
+                if (result != null) {
+                    val speechText = when (result) {
+                        is ScamResultData.ImageVerification -> buildSpeechText(result.data)
+                        is ScamResultData.ScamAnalysis -> buildSpeechText(result.data)
+                    }
                     val audioFilePath = textToSpeechRepository.textToSpeech(speechText).getOrThrow()
                     _audioFilePath.value = audioFilePath
-
-                    // Play the audio file
                     audioPlayer.playAudioFile(audioFilePath) {
                         _isSpeaking.value = false
                     }
                 } else {
-                    Log.w("ScamResultViewModel", "No verification response available for speech")
                     _isSpeaking.value = false
                 }
             } catch (e: Exception) {
                 Log.e("ScamResultViewModel", "Error speaking analysis", e)
                 _isSpeaking.value = false
             }
+        }
+    }
+
+
+
+    private fun buildSpeechText(response: ScamAnalysisResponse): String {
+        return buildString {
+            append("Kết quả phân tích: ")
+            when (response.risk_level.uppercase()) {
+                "HIGH" -> append("Mức độ nguy hiểm cao. ")
+                "MEDIUM" -> append("Mức độ nghi ngờ trung bình. ")
+                "LOW" -> append("Mức độ an toàn. ")
+            }
+            append("Độ tin cậy: ${response.confidence} phần trăm. ")
+            append("Phân tích chi tiết: ${response.analysis} ")
+            append("Khuyến nghị: ${response.recommendation}")
         }
     }
 
@@ -107,12 +115,6 @@ class ScamResultViewModel @Inject constructor(
                 }
             }
 
-            // Add OCR text if available
-            response.ocrText?.let { ocrText ->
-                if (ocrText.isNotEmpty()) {
-                    append("Văn bản được phát hiện: $ocrText ")
-                }
-            }
 
             // Add entities information if available
             response.entities?.let { entities ->
@@ -129,30 +131,25 @@ class ScamResultViewModel @Inject constructor(
         }
     }
 
+
     fun contactRelatives() {
         viewModelScope.launch {
-            try {
-                val response = verificationResponse.value
-                if (response != null) {
-                    val message = buildContactMessage(response)
-                    Log.d("ScamResultViewModel", "Contacting relatives with message: $message")
-                    // TODO: Implement actual contact functionality
-                    // This could involve sending SMS, making calls, or opening contact app
-                } else {
-                    Log.w("ScamResultViewModel", "No verification response available for contact")
+            val result = _resultData.value
+            if (result != null) {
+                val message = when (result) {
+                    is ScamResultData.ImageVerification -> buildContactMessage(result.data.getEffectiveRiskLevel())
+                    is ScamResultData.ScamAnalysis -> buildContactMessage(result.data.risk_level)
                 }
-            } catch (e: Exception) {
-                Log.e("ScamResultViewModel", "Error contacting relatives", e)
+                Log.d("ScamResultViewModel", "Contact message: $message")
+                // TODO: send message via SMS/call
             }
         }
     }
 
-    private fun buildContactMessage(response: ImageVerificationResponse): String {
-        val effectiveRiskLevel = response.getEffectiveRiskLevel()
-
+    private fun buildContactMessage(riskLevel: String): String {
         return buildString {
             append("Cảnh báo từ ứng dụng Trustie: ")
-            when (effectiveRiskLevel.uppercase()) {
+            when (riskLevel.uppercase()) {
                 "HIGH" -> append("Phát hiện nội dung lừa đảo nguy hiểm. ")
                 "MEDIUM" -> append("Phát hiện nội dung nghi ngờ. ")
                 "LOW" -> append("Nội dung được đánh giá an toàn. ")

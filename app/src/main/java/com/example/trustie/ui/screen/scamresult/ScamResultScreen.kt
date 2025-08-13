@@ -145,6 +145,7 @@ private fun WarningContent(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color(0xFFDBD5E8))
                 .padding(16.dp)
         ) {
             Column(
@@ -211,6 +212,7 @@ private fun WarningContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color(0xFFDBD5E8))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -235,6 +237,7 @@ private fun WarningContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color(0xFFDBD5E8))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -348,6 +351,7 @@ private fun SafeContent(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color(0xFFDBD5E8))
                 .padding(16.dp)
         ) {
             Column(
@@ -414,6 +418,7 @@ private fun SafeContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {

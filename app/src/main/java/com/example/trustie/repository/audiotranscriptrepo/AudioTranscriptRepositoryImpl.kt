@@ -15,6 +15,7 @@ import com.example.trustie.data.api.ApiManager
 import com.example.trustie.data.local.wave2vec.OnnxWav2Vec2Manager
 import com.example.trustie.data.local.wave2vec.TFLiteModelManager
 import com.example.trustie.data.local.wave2vec.TranscriptionResult
+import com.example.trustie.data.model.response.ScamAnalysisResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import java.util.Locale
@@ -50,7 +51,9 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         "lừa đảo",
         "nạp tiền",
         "vay tiền",
-        "thanh toán"
+        "thanh toán",
+        "đơn hàng",
+        "trúng thưởng"
     )
 
     // Flags to prevent repeated calls
@@ -128,29 +131,25 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
             }
 
             listeningJob = launch {
-                val buffer = ShortArray(minBuf)               // mic read buffer
-                val sampleWindow = 3200                     // 2 sec @ 16kHz
-                val rollingBuffer = ShortArray(sampleWindow)  // sliding audio buffer
+                val buffer = ShortArray(minBuf)
+                val sampleWindow = 32000
+                val rollingBuffer = ShortArray(sampleWindow)
                 var filled = 0
+
+                var lastTokens: List<Int>? = null
+                var stableText = ""
+                var lastPending = ""
 
                 while (isListening && isActive) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
-
-                        val framesPerSecond = 50 // ~20ms per frame with Wav2Vec2 base
+                        val framesPerSecond = 50
                         val overlapFrames = framesPerSecond * 1 // 1 second overlap
-
-                        var lastTokens: List<Int>? = null
-                        var stableText = ""
-                        var lastPending = ""
-
 
                         val spaceLeft = sampleWindow - filled
                         val copyCount = minOf(spaceLeft, read)
                         System.arraycopy(buffer, 0, rollingBuffer, filled, copyCount)
                         filled += copyCount
-
-
 
                         if (filled >= sampleWindow) {
                             val result = withContext(Dispatchers.Default) {
@@ -160,37 +159,43 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                             }
 
                             if (lastTokens == null) {
-                                // First chunk: nothing stable yet, entire thing is pending
                                 lastPending = result.text
                                 _pendingChunk.postValue(lastPending)
                                 _stableTranscript.postValue(stableText)
                             } else {
-                                // Drop overlap frames from this chunk
                                 val newTokens = result.tokens.drop(overlapFrames)
                                 val newText = modelManager.ctcDecode(newTokens.toIntArray())
 
-                                // Commit previous pending into stable transcript
                                 if (lastPending.isNotBlank()) {
                                     stableText = (stableText + " " + lastPending).trim()
                                     _stableTranscript.postValue(stableText)
                                 }
 
-                                // New text becomes the new pending chunk
                                 lastPending = newText
                                 _pendingChunk.postValue(lastPending)
 
-                                // Scam keyword check only on committed text + pending
                                 if (!scamFlagTriggered && containsScamKeyword(newText)) {
                                     scamFlagTriggered = true
-                                    _scamDetected.postValue(true)
-                                    launch(Dispatchers.IO) { sendToLLM((stableText + " " + newText).trim()) }
+                                    stopListening()
+
+                                    launch(Dispatchers.IO) {
+                                        val response = sendToLLM((stableText + " " + newText).trim())
+                                        if (response != null) {
+                                            if (response.risk_level.equals("High", ignoreCase = true)) {
+                                                _scamDetected.postValue(true)
+                                            } else {
+                                                scamFlagTriggered = false
+                                                startListening()
+                                            }
+                                        } else {
+                                            scamFlagTriggered = false
+                                            startListening()
+                                        }
+                                    }
                                 }
                             }
 
-                            // Always update lastTokens
                             lastTokens = result.tokens
-
-                            // Slide buffer for overlap
                             val overlap = sampleWindow / 2
                             System.arraycopy(rollingBuffer, overlap, rollingBuffer, 0, overlap)
                             filled = overlap
@@ -217,14 +222,12 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun sendToLLM(conversation: String): Map<String, Any> {
+    private suspend fun sendToLLM(conversation: String): ScamAnalysisResponse? {
         return try {
-            val response = ApiManager.scamDetectionApi.analyzeAudioTranscript(conversation)
-            Log.d("AudioTranscriptRepository", "LLM Response: $response")
-            response
+            ApiManager.scamDetectionApi.analyzeAudioTranscript(conversation)
         } catch (e: Exception) {
             Log.e("AudioTranscriptRepository", "Error sending to LLM", e)
-            emptyMap()
+            null
         }
     }
 }
