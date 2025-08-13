@@ -258,25 +258,25 @@ fun HomeScreen(
 //                        .height(160.dp)
 //                )
 //            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onLogoutClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFD32F2F)
-                ),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = "Đăng xuất",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            Button(
+//                onClick = onLogoutClick,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(56.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color(0xFFD32F2F)
+//                ),
+//                shape = MaterialTheme.shapes.medium
+//            ) {
+//                Text(
+//                    text = "Đăng xuất",
+//                    fontSize = 18.sp,
+//                    fontWeight = FontWeight.Bold,
+//                    color = Color.White
+//                )
+//            }
         }
     }
 }

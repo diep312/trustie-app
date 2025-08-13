@@ -1,4 +1,3 @@
-
 package com.example.trustie.navigation
 
 import android.content.Context
@@ -25,10 +24,10 @@ import com.example.trustie.ui.screen.checkphone.CheckPhoneScreen
 import com.example.trustie.ui.screen.connect.ConnectRelativesScreen
 import com.example.trustie.ui.screen.report.ReportPhoneScreen
 import com.example.trustie.ui.screen.alert.IncomingCallAlertScreen
+import com.example.trustie.ui.screen.audiocallrecorder.AudioRecorderScreen
 import com.example.trustie.ui.screen.imagedetection.ImageVerificationScreen
 import com.example.trustie.ui.screen.scamresult.ScamResultScreen
 import com.example.trustie.ui.screen.notification.NotificationScreen
-import com.example.trustie.ui.screen.qrscanner.QRScannerScreen
 
 @Composable
 fun     AppNavigation(
@@ -62,7 +61,9 @@ fun     AppNavigation(
 
         composable(Screen.PhoneInput.route) {
             PhoneInputScreen(
-                onNavigateToOTP = { navController.navigate(Screen.OTPInput.route) },
+                onNavigateToOTP = {
+                    navController.navigate(Screen.OTPInput.route)
+                },
                 viewModel = authViewModel
             )
         }
@@ -74,7 +75,9 @@ fun     AppNavigation(
                         popUpTo(Screen.PhoneInput.route) { inclusive = true }
                     }
                 },
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
                 viewModel = authViewModel
             )
         }
@@ -98,6 +101,9 @@ fun     AppNavigation(
                         "Kiểm tra số" -> {
                             navController.navigate(Screen.CheckPhone.route)
                         }
+                        "Nhận diện cuộc gọi lừa đảo" -> {
+                            navController.navigate(Screen.AudioRecording.route)
+                        }
                     }
                 },
                 onLogoutClick = {
@@ -114,36 +120,31 @@ fun     AppNavigation(
 
         composable(Screen.CallHistory.route) {
             CallHistoryScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = {
+                    navController.popBackStack()
+                }
             )
         }
 
         composable(Screen.CheckPhone.route) {
             CheckPhoneScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-
-
-        composable(Screen.ReportPhone.route) {
-            ReportPhoneScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-        composable(Screen.ConnectRelatives.route) {
-            ConnectRelativesScreen(
-                onBackClick = { navController.popBackStack() },
-                onNavigateToQRScanner = {
-                    navController.navigate(Screen.QRScanner.route)
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
 
-        composable(Screen.QRScanner.route) {
-            QRScannerScreen(
-                onBackClick = { navController.popBackStack() },
-                onScanSuccess = {
+        composable(Screen.ConnectRelatives.route) {
+            ConnectRelativesScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.ReportPhone.route) {
+            ReportPhoneScreen(
+                onBackClick = {
                     navController.popBackStack()
                 }
             )
@@ -161,8 +162,12 @@ fun     AppNavigation(
             IncomingCallAlertScreen(
                 phoneNumber = phoneNumber,
                 isSuspicious = isSuspicious,
-                onAcceptCall = { navController.popBackStack() },
-                onDeclineCall = { navController.popBackStack() }
+                onAcceptCall = {
+                    navController.popBackStack()
+                },
+                onDeclineCall = {
+                    navController.popBackStack()
+                }
             )
         }
         composable(Screen.CheckImage.route) {
@@ -176,6 +181,12 @@ fun     AppNavigation(
         composable(Screen.ScamResult.route) {
             ScamResultScreen(
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AudioRecording.route){
+            AudioRecorderScreen(
+                onBackClick={ navController.popBackStack() }
             )
         }
 

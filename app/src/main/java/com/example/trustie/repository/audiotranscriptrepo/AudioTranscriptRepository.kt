@@ -8,8 +8,10 @@ import androidx.lifecycle.LiveData
 
     fun stopListening()
 
-    val transcript: LiveData<String>
+     val stableTranscript: LiveData<String>
 
-    val scamDetected: LiveData<Boolean>
+     val pendingChunk: LiveData<String>
+
+     val scamDetected: LiveData<Boolean>
 
 }

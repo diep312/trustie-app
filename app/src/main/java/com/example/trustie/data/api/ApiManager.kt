@@ -44,6 +44,10 @@ object ApiManager {
     val textToSpeechApi: TextToSpeechApiService by lazy {
         BaseApiService.createService()
     }
+
+    val scamDetectionApi: ScamDetectionApiService by lazy {
+        BaseApiService.createService()
+    }
     
 //    // Call API
 //    val callApi: CallApiService by lazy {

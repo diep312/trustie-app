@@ -85,6 +85,7 @@ espressoCore = "3.6.1"
 ui-test-junit4 = "1.5.8"
 ui-tooling = "1.5.8"
 ui-test-manifest = "1.5.8"
+runtimeLivedata = "1.8.3"
 
 
 [libraries]
@@ -137,6 +138,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "ui-test-junit4" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "ui-test-manifest" }
+androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 
 
 [plugins]

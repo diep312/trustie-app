@@ -3,6 +3,7 @@ package com.example.trustie
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,26 +16,35 @@ import com.example.trustie.ui.screen.auth.AuthViewModel
 import com.example.trustie.utils.PermissionHelper
 
 class MainActivity : BaseAuthenticatedActivity() {
-    
+
     companion object {
         private const val TAG = "MainActivity"
     }
-    
+
     private var navController: NavHostController? = null
     private lateinit var callDetectionManager: CallDetectionManager
-    
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         if (allGranted) {
-            Log.d(TAG, "All permissions granted, starting call detection")
-            callDetectionManager.startCallDetection()
+            if (PermissionHelper.isMicPrivacyEnabled(this)) {
+                Log.w(TAG, "Mic privacy toggle is ON — cannot record audio")
+                Toast.makeText(
+                    this,
+                    "Vui lòng bật mic trong cài đặt riêng tư",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Log.d(TAG, "All permissions granted, starting call detection")
+                callDetectionManager.startCallDetection()
+            }
         } else {
             Log.w(TAG, "Some permissions were denied")
         }
     }
-    
+
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -63,29 +73,29 @@ class MainActivity : BaseAuthenticatedActivity() {
                 val phoneNumber = uri.getQueryParameter("phone")
                 val message = uri.getQueryParameter("message")
                 val isHighRisk = uri.getQueryParameter("high_risk")?.toBoolean() ?: false
-                
+
                 if (phoneNumber != null && message != null) {
                     callDetectionManager.showCallAlert(phoneNumber, message, isHighRisk)
                 }
             }
         }
     }
-    
+
     @Composable
     override fun MainContent(authViewModel: AuthViewModel) {
         navController = rememberNavController()
-        
+
         // Initialize call detection when user is authenticated
         LaunchedEffect(Unit) {
             initializeCallDetection()
         }
-        
+
         AppNavigation(
             navController = navController!!,
             authViewModel = authViewModel
         )
     }
-    
+
     private fun initializeCallDetection() {
         if (PermissionHelper.hasRequiredPermissions(this)) {
             Log.d(TAG, "Required permissions already granted, starting call detection")
@@ -94,14 +104,14 @@ class MainActivity : BaseAuthenticatedActivity() {
             Log.d(TAG, "Requesting required permissions")
             permissionLauncher.launch(PermissionHelper.REQUIRED_PERMISSIONS)
         }
-        
+
         // Request overlay permission if not granted
         if (!PermissionHelper.hasOverlayPermission(this)) {
             Log.d(TAG, "Requesting overlay permission")
             PermissionHelper.requestOverlayPermission(this)
         }
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         // Stop call detection when app is destroyed

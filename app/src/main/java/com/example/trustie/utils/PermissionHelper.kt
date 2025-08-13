@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.hardware.SensorPrivacyManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -21,12 +22,14 @@ object PermissionHelper {
         arrayOf(
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.POST_NOTIFICATIONS
         )
     } else {
         arrayOf(
             Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_CALL_LOG
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.RECORD_AUDIO
         )
     }
 
@@ -71,5 +74,15 @@ object PermissionHelper {
             data = Uri.fromParts("package", activity.packageName, null)
         }
         activity.startActivity(intent)
+    }
+
+
+    fun isMicPrivacyEnabled(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val spm = context.getSystemService(SensorPrivacyManager::class.java)
+            return spm.supportsSensorToggle(SensorPrivacyManager.Sensors.MICROPHONE)
+        }
+        // Older Android versions don't have mic privacy toggle
+        return false
     }
 }

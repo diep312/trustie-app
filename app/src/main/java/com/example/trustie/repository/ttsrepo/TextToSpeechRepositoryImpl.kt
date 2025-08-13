@@ -16,59 +16,36 @@ import javax.inject.Singleton
 class TextToSpeechRepositoryImpl @Inject constructor(
     private val context: Context
 ) : TextToSpeechRepository {
-    
+
     override suspend fun textToSpeech(text: String): Result<String> {
         return try {
             Log.d("TextToSpeechRepository", "Converting text to speech: $text")
+
+            // Call API (this should return ResponseBody)
             val response = ApiManager.textToSpeechApi.textToSpeech(text)
-            Log.d("TextToSpeechRepository", "TTS response: $response")
-            
-            // Extract audio URL from response
-            val audioUrl = response["audio_url"] as? String
-            if (audioUrl != null) {
-                // Download the audio file
-                val localFilePath = downloadAudioFile(audioUrl).getOrThrow()
-                Result.success(localFilePath)
-            } else {
-                Result.failure(Exception("No audio URL in response"))
+
+            // Ensure success
+            if (!response.isSuccessful) {
+                return Result.failure(Exception("TTS request failed: ${response.code()}"))
             }
+
+            // Get raw audio bytes
+            val audioBytes = response.body()?.bytes()
+            if (audioBytes == null || audioBytes.isEmpty()) {
+                return Result.failure(Exception("Empty audio file in response"))
+            }
+
+            // Save to local storage
+            val fileName = "tts_${System.currentTimeMillis()}.wav"
+            val file = File(context.cacheDir, fileName)
+            file.outputStream().use { it.write(audioBytes) }
+
+            Log.d("TextToSpeechRepository", "Audio saved to: ${file.absolutePath}")
+            Result.success(file.absolutePath)
+
         } catch (e: Exception) {
             Log.e("TextToSpeechRepository", "Error converting text to speech", e)
             Result.failure(e)
-        }
-    }
-    
-    override suspend fun downloadAudioFile(audioUrl: String): Result<String> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d("TextToSpeechRepository", "Downloading audio file from: $audioUrl")
-                
-                val client = OkHttpClient()
-                val request = Request.Builder()
-                    .url(audioUrl)
-                    .build()
-                
-                val response = client.newCall(request).execute()
-                if (!response.isSuccessful) {
-                    throw Exception("Failed to download audio file: ${response.code}")
-                }
-                
-                // Create a temporary file in the app's cache directory
-                val audioFile = File(context.cacheDir, "tts_audio_${System.currentTimeMillis()}.wav")
-                val inputStream = response.body?.byteStream()
-                
-                inputStream?.use { input ->
-                    FileOutputStream(audioFile).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                
-                Log.d("TextToSpeechRepository", "Audio file saved to: ${audioFile.absolutePath}")
-                Result.success(audioFile.absolutePath)
-            } catch (e: Exception) {
-                Log.e("TextToSpeechRepository", "Error downloading audio file", e)
-                Result.failure(e)
-            }
         }
     }
 } 
