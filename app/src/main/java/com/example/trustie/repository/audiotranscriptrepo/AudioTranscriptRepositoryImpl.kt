@@ -11,11 +11,13 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.trustie.data.GlobalStateManager
 import com.example.trustie.data.api.ApiManager
 import com.example.trustie.data.local.wave2vec.OnnxWav2Vec2Manager
 import com.example.trustie.data.local.wave2vec.TFLiteModelManager
 import com.example.trustie.data.local.wave2vec.TranscriptionResult
 import com.example.trustie.data.model.response.ScamAnalysisResponse
+import com.example.trustie.ui.screen.scamresult.ScamResultData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import java.util.Locale
@@ -25,7 +27,8 @@ import javax.inject.Singleton
 @Singleton
 class AudioTranscriptRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val modelManager: OnnxWav2Vec2Manager
+    private val modelManager: OnnxWav2Vec2Manager,
+    private val globalStateManager: GlobalStateManager
 ) : AudioTranscriptRepository {
 
     private val _stableTranscript = MutableLiveData<String>()
@@ -36,6 +39,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
 
     private val _scamDetected = MutableLiveData<Boolean>()
     override val scamDetected: LiveData<Boolean> get() = _scamDetected
+
 
     private var audioRecord: AudioRecord? = null
     private var isListening = false
@@ -182,6 +186,9 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                                         val response = sendToLLM((stableText + " " + newText).trim())
                                         if (response != null) {
                                             if (response.risk_level.equals("High", ignoreCase = true)) {
+                                                globalStateManager.setScamResultData(
+                                                    ScamResultData.ScamAnalysis(response)
+                                                )
                                                 _scamDetected.postValue(true)
                                             } else {
                                                 scamFlagTriggered = false
@@ -230,4 +237,10 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
             null
         }
     }
+
+
+    override fun resetScamDetection() {
+        globalStateManager.clearScamResultData()
+    }
+
 }

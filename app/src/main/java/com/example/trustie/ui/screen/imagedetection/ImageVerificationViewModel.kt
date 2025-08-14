@@ -10,6 +10,7 @@ import com.example.trustie.data.model.ImageVerificationUiState
 import com.example.trustie.data.model.VerificationState
 import com.example.trustie.data.model.request.ImageVerificationRequest
 import com.example.trustie.repository.imagerepo.ImageVerificationRepository
+import com.example.trustie.ui.screen.scamresult.ScamResultData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -86,7 +87,9 @@ class ImageVerificationViewModel @Inject constructor(
                     Log.d("ImageVerificationDebug", "Confidence: ${response.llmAnalysis.confidence}")
 
                     // Store in GlobalStateManager
-                    globalStateManager.setVerificationResponse(response)
+                    globalStateManager.setScamResultData(
+                        ScamResultData.ImageVerification(response)
+                    )
                     Log.d("ImageVerificationDebug", "Stored response in GlobalStateManager")
 
                     // Update UI state with response - this will trigger navigation
@@ -130,7 +133,7 @@ class ImageVerificationViewModel @Inject constructor(
 
     fun resetToInitial() {
         Log.d("ImageVerificationDebug", "resetToInitial called")
-        globalStateManager.clearVerificationResponse()
+        globalStateManager.clearScamResultData()
         _uiState.value = ImageVerificationUiState()
         // Reset navigation flag
         hasNavigated = false

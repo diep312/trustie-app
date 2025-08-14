@@ -186,7 +186,10 @@ fun     AppNavigation(
 
         composable(Screen.AudioRecording.route){
             AudioRecorderScreen(
-                onBackClick={ navController.popBackStack() }
+                onBackClick={ navController.popBackStack() },
+                onNavigateToScamResult = { verificationResponse ->
+                    navController.navigate(Screen.ScamResult.route)
+                }
             )
         }
 

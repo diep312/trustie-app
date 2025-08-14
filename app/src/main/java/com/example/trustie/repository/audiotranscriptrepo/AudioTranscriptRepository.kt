@@ -14,4 +14,6 @@ import androidx.lifecycle.LiveData
 
      val scamDetected: LiveData<Boolean>
 
+     fun resetScamDetection()
+
 }

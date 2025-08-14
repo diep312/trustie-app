@@ -47,7 +47,10 @@ data class LlmAnalysis(
     val confidence: Int?,
 
     @SerializedName("model_used")
-    val modelUsed: String?
+    val modelUsed: String?,
+
+    @SerializedName("recommendation")
+    val recommendation: String?
 ) : Parcelable
 
 @Parcelize
@@ -61,8 +64,8 @@ data class ParsedAnalysis(
     @SerializedName("ANALYSIS")
     val analysisText: String?,
 
-    @SerializedName("RECOMMENDATIONS")
-    val recommendations: List<String>?
+    @SerializedName("RECOMMENDATION")
+    val recommendation: String? // <-- match naming
 ) : Parcelable
 
 // Extension function to parse the analysis JSON
@@ -150,8 +153,8 @@ fun ImageVerificationResponse.getReadableAnalysis(): String {
 }
 
 // Extension function to get recommendations
-fun ImageVerificationResponse.getRecommendations(): List<String> {
+fun ImageVerificationResponse.getRecommendations(): String {
     val parsedAnalysis = llmAnalysis.getParsedAnalysis()
-    return parsedAnalysis?.recommendations ?: emptyList()
+    return parsedAnalysis?.recommendation ?: "Không có khuyến nghị gì"
 }
 

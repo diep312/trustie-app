@@ -41,7 +41,15 @@ fun ScamResultScreen(
     viewModel: ScamResultViewModel = hiltViewModel()
 ) {
     // Get response from GlobalStateManager via ViewModel
-    val currentResponse by viewModel.verificationResponse.collectAsState()
+    val currentResponse by viewModel.scamResultData.collectAsState()
+
+    val isSpeaking by viewModel.isSpeaking.collectAsState()
+    val isAudioPlaying by remember { derivedStateOf { viewModel.isAudioPlaying() }}
+    var isHighRisk by remember { mutableStateOf(false) }
+    var riskLevel = ""
+    var confidence: Int? = null
+    var readableAnalysis = ""
+    var recommendations  = ""
 
     Log.d("ScamResultScreen", "ScamResultScreen composed. Response: ${currentResponse != null}")
 
@@ -70,16 +78,30 @@ fun ScamResultScreen(
         }
         return
     }
+    else{
+        when (currentResponse) {
+            is ScamResultData.ImageVerification -> {
+                val data = (currentResponse as ScamResultData.ImageVerification).data
+                riskLevel = data.getEffectiveRiskLevel().uppercase()
+                confidence = data.getEffectiveConfidence()
+                readableAnalysis = data.getReadableAnalysis()
+                recommendations = data.getRecommendations()
+            }
+            is ScamResultData.ScamAnalysis -> {
+                val data = (currentResponse as ScamResultData.ScamAnalysis).data
+                riskLevel = data.risk_level.uppercase()
+                confidence = data.confidence
+                readableAnalysis = data.analysis ?: ""
+                recommendations = data.recommendation ?: ""
+            }
 
-    // Use currentResponse (guaranteed non-null here)
-    val response = currentResponse!!
-    val effectiveRiskLevel = response.getEffectiveRiskLevel().uppercase()
-    val isHighRisk = effectiveRiskLevel == "HIGH" || effectiveRiskLevel == "MEDIUM"
-    val isSpeaking by viewModel.isSpeaking.collectAsState()
-    val isAudioPlaying by remember { derivedStateOf { viewModel.isAudioPlaying() } }
+            null -> TODO()
+        }
 
-    Log.d("ScamResultScreen", "Showing result for risk level: $effectiveRiskLevel")
-    Log.d("ScamResultScreen", "Confidence: ${response.getEffectiveConfidence()}")
+        isHighRisk = riskLevel == "HIGH" || riskLevel == "MEDIUM"
+    }
+
+
 
     // Handle back navigation - DON'T clear verification response here
     val handleBackClick = {
@@ -101,25 +123,29 @@ fun ScamResultScreen(
 
             if (isHighRisk) {
                 WarningContent(
+                    riskLevel = riskLevel,
+                    confidence = confidence,
+                    readableAnalysis = readableAnalysis,
+                    recommendations = recommendations,
                     onAiAnalysisClick = { viewModel.speakAnalysis() },
                     onContactRelativesClick = { viewModel.contactRelatives() },
                     onStopAudio = { viewModel.stopAudio() },
                     onPauseAudio = { viewModel.pauseAudio() },
                     onResumeAudio = { viewModel.resumeAudio() },
                     isSpeaking = isSpeaking,
-                    isAudioPlaying = isAudioPlaying,
-                    verificationResponse = response
+                    isAudioPlaying = isAudioPlaying
                 )
             } else {
                 SafeContent(
+                    riskLevel = riskLevel,
+                    confidence = confidence,
                     onAiAnalysisClick = { viewModel.speakAnalysis() },
                     onContactRelativesClick = { viewModel.contactRelatives() },
                     onStopAudio = { viewModel.stopAudio() },
                     onPauseAudio = { viewModel.pauseAudio() },
                     onResumeAudio = { viewModel.resumeAudio() },
                     isSpeaking = isSpeaking,
-                    isAudioPlaying = isAudioPlaying,
-                    verificationResponse = response
+                    isAudioPlaying = isAudioPlaying
                 )
             }
         }
@@ -128,14 +154,17 @@ fun ScamResultScreen(
 
 @Composable
 private fun WarningContent(
+    riskLevel: String,
+    confidence: Int?,
+    readableAnalysis: String,
+    recommendations: String,
     onAiAnalysisClick: () -> Unit,
     onContactRelativesClick: () -> Unit,
     onStopAudio: () -> Unit,
     onPauseAudio: () -> Unit,
     onResumeAudio: () -> Unit,
     isSpeaking: Boolean,
-    isAudioPlaying: Boolean,
-    verificationResponse: ImageVerificationResponse
+    isAudioPlaying: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -185,7 +214,7 @@ private fun WarningContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Mức độ rủi ro: ${verificationResponse.getEffectiveRiskLevel()}",
+                    text = "Mức độ rủi ro: ${riskLevel}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFD32F2F),
@@ -193,21 +222,20 @@ private fun WarningContent(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                verificationResponse.getEffectiveConfidence()?.let { confidence ->
-                    Text(
-                        text = "Độ tin cậy: $confidence%",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                    )
-                }
+
+                Text(
+                    text = "Độ tin cậy: $confidence%",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+
             }
         }
 
-        val readableAnalysis = verificationResponse.getReadableAnalysis()
         if (readableAnalysis.isNotEmpty() && readableAnalysis != "Không có thông tin phân tích") {
             Card(
                 modifier = Modifier
@@ -232,7 +260,7 @@ private fun WarningContent(
             }
         }
 
-        val recommendations = verificationResponse.getRecommendations()
+
         if (recommendations.isNotEmpty()) {
             Card(
                 modifier = Modifier
@@ -334,14 +362,15 @@ private fun WarningContent(
 
 @Composable
 private fun SafeContent(
+    riskLevel: String,
+    confidence: Int?,
     onAiAnalysisClick: () -> Unit,
     onContactRelativesClick: () -> Unit,
     onStopAudio: () -> Unit,
     onPauseAudio: () -> Unit,
     onResumeAudio: () -> Unit,
     isSpeaking: Boolean,
-    isAudioPlaying: Boolean,
-    verificationResponse: ImageVerificationResponse
+    isAudioPlaying: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -391,7 +420,7 @@ private fun SafeContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Mức độ rủi ro: ${verificationResponse.getEffectiveRiskLevel()}",
+                    text = "Mức độ rủi ro: ${riskLevel}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF4CAF50),
@@ -399,17 +428,16 @@ private fun SafeContent(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                verificationResponse.getEffectiveConfidence()?.let { confidence ->
-                    Text(
-                        text = "Độ tin cậy: $confidence%",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                    )
-                }
+
+                Text(
+                    text = "Độ tin cậy: $confidence%",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
             }
         }
 

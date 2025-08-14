@@ -1,5 +1,6 @@
 package com.example.trustie.ui.screen.audiocallrecorder
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,17 +16,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.trustie.data.GlobalStateManager
+import com.example.trustie.data.model.response.ImageVerificationResponse
+import com.example.trustie.data.model.response.ScamAnalysisResponse
 import com.example.trustie.ui.components.ScreenHeader
+import com.example.trustie.ui.screen.scamresult.ScamResultData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioRecorderScreen(
     onBackClick: () -> Unit,
+    onNavigateToScamResult: (ScamAnalysisResponse) -> Unit,
     viewModel: AudioRecorderViewmodel = hiltViewModel()
 ) {
     val stableTranscript by viewModel.stableTranscript.observeAsState("")
     val pendingChunk by viewModel.pendingChunk.observeAsState("")
     val scamDetected by viewModel.scamDetected.observeAsState(false)
+    val globalStateManager = GlobalStateManager()
+
+    LaunchedEffect(Unit) {
+        Log.d("ImageVerificationScreen", "Screen entered, resetting to initial state")
+        viewModel.resetScamDetection()
+    }
+
+    LaunchedEffect(scamDetected) {
+        if (scamDetected) {
+            viewModel.getScamResultData()?.let { result ->
+                if (result is ScamResultData.ScamAnalysis) {
+                    onNavigateToScamResult(result.data)
+                }
+            }
+            viewModel.resetScamDetection()
+        }
+    }
 
     val displayText = buildAnnotatedString {
         if (stableTranscript.isEmpty()) {
