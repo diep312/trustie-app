@@ -335,7 +335,7 @@ fun ConnectRelativesScreen(
                     else -> {
                         // QR Code Display
                         QRCodeGenerator(
-                            data = "trustie\\:connect=family_user_id=$userId",
+                            data = "$userId",
                             modifier = Modifier.size(250.dp)
                         )
                         Spacer(modifier = Modifier.height(24.dp))

@@ -1,4 +1,5 @@
 
+
 package com.example.trustie.repository.connectrepo
 
 import android.util.Log
@@ -9,6 +10,7 @@ import com.example.trustie.data.model.LinkFamilyResponse
 import com.example.trustie.data.model.QRScanResult
 import com.example.trustie.data.model.RelativeConnection
 import com.example.trustie.data.model.request.LinkRequest
+import com.example.trustie.utils.UserUtils
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,11 +23,24 @@ class ConnectionRepository @Inject constructor() {
     suspend fun generateQRCode(): ConnectionResponse {
         return try {
             Log.d("ConnectionDebug", "Generating QR code...")
+
+            val currentUserId = UserUtils.getCurrentUserId()
+            Log.d("ConnectionDebug", "Current user ID for QR: $currentUserId")
+
+            if (currentUserId <= 0) {
+                return ConnectionResponse(
+                    success = false,
+                    message = "ID người dùng không hợp lệ"
+                )
+            }
+
             delay(1500)
-            val mockQRCode = "TRUSTIE_CONNECT_${System.currentTimeMillis()}"
+                val qrCode = "$currentUserId"
+            Log.d("ConnectionDebug", "Generated QR code: $qrCode")
+
             ConnectionResponse(
                 success = true,
-                qrCode = mockQRCode
+                qrCode = qrCode
             )
         } catch (e: Exception) {
             Log.e("ConnectionDebug", "Error generating QR code: ${e.message}", e)
@@ -40,29 +55,22 @@ class ConnectionRepository @Inject constructor() {
         return try {
             Log.d("ConnectionDebug", "Parsing QR code: $qrData")
 
-            // Parse QR code format: "trustie:connect=family_user_id=123"
-            if (qrData.startsWith("trustie:connect=family_user_id=") ||
-                qrData.startsWith("trustie\\:connect=family_user_id=")) {
+            // Handle multiple QR code formats
+            val cleanedData = qrData.replace("\\", "") // Remove escaped backslashes
 
-                val userIdString = qrData.substringAfter("family_user_id=")
-                val elderlyUserId = userIdString.toIntOrNull()
-
-                if (elderlyUserId != null) {
-                    QRScanResult(
-                        success = true,
-                        elderlyUserId = elderlyUserId
-                    )
-                } else {
+            when {
+                cleanedData.toIntOrNull() != null -> {
+                    QRScanResult(success = true)
+                }
+                cleanedData.startsWith("family_user_id=") -> {
+                    QRScanResult(success = true)
+                }
+                else -> {
                     QRScanResult(
                         success = false,
-                        message = "Mã QR không hợp lệ"
+                        message = "Mã QR không phải của Trustie"
                     )
                 }
-            } else {
-                QRScanResult(
-                    success = false,
-                    message = "Mã QR không phải của Trustie"
-                )
             }
         } catch (e: Exception) {
             Log.e("ConnectionDebug", "Error parsing QR code: ${e.message}", e)
@@ -76,6 +84,24 @@ class ConnectionRepository @Inject constructor() {
     suspend fun linkFamily(linkRequest: LinkRequest): LinkFamilyResponse {
         return try {
             Log.d("ConnectionDebug", "Linking family member: ${linkRequest.name}")
+            Log.d("ConnectionDebug", "Request data: $linkRequest")
+
+            // Validate request data before sending
+            if (linkRequest.familyUserId <= 0) {
+                return LinkFamilyResponse(
+                    success = false,
+                    message = "ID người dùng không hợp lệ"
+                )
+            }
+
+            if (linkRequest.name.isBlank()) {
+                return LinkFamilyResponse(
+                    success = false,
+                    message = "Tên không được để trống"
+                )
+            }
+
+            // Phone number is optional now
 
             val response = familyApiService.linkFamily(linkRequest)
 
@@ -83,6 +109,24 @@ class ConnectionRepository @Inject constructor() {
                 success = true,
                 message = "Kết nối thành công!",
                 data = response
+            )
+        } catch (e: retrofit2.HttpException) {
+            Log.e("ConnectionDebug", "HTTP Error linking family: ${e.code()} - ${e.message()}", e)
+            val errorBody = e.response()?.errorBody()?.string()
+            Log.e("ConnectionDebug", "Error body: $errorBody")
+
+            val errorMessage = when (e.code()) {
+                400 -> "Dữ liệu không hợp lệ - $errorBody"
+                401 -> "Không có quyền truy cập"
+                404 -> "Không tìm thấy người dùng"
+                409 -> "Kết nối đã tồn tại"
+                500 -> "Lỗi server"
+                else -> "Lỗi kết nối: ${e.message()}"
+            }
+
+            LinkFamilyResponse(
+                success = false,
+                message = errorMessage
             )
         } catch (e: Exception) {
             Log.e("ConnectionDebug", "Error linking family: ${e.message}", e)
@@ -93,6 +137,7 @@ class ConnectionRepository @Inject constructor() {
         }
     }
 
+    // ... rest of the methods remain the same
     suspend fun getConnections(): ConnectionResponse {
         return try {
             Log.d("ConnectionDebug", "Getting connections...")
