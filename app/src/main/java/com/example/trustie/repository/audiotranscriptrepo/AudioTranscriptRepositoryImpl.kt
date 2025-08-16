@@ -40,25 +40,43 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
     private val _scamDetected = MutableLiveData<Boolean>()
     override val scamDetected: LiveData<Boolean> get() = _scamDetected
 
-
     private var audioRecord: AudioRecord? = null
     private var isListening = false
     private var listeningJob: Job? = null
 
     // Vietnamese scam keywords
-    private val scamKeywords = listOf(
-        "tài khoản ngân hàng",
-        "mật khẩu",
-        "otp",
-        "chuyển khoản",
-        "thẻ tín dụng",
-        "lừa đảo",
-        "nạp tiền",
-        "vay tiền",
-        "thanh toán",
-        "đơn hàng",
-        "trúng thưởng"
-    )
+    private val scamKeywords: List<String> by lazy {
+        loadScamKeywords()
+    }
+
+    private fun loadScamKeywords(): List<String> {
+        return try {
+            context.assets.open("./scam_keywords.txt").use { inputStream ->
+                inputStream.bufferedReader().useLines { lines ->
+                    lines
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() && !it.startsWith("#") } // Skip empty lines and comments
+                        .toList()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AudioTranscriptRepo", "Error loading scam keywords", e)
+            // Fallback to default keywords if file loading fails
+            listOf(
+                "tài khoản ngân hàng",
+                "mật khẩu",
+                "otp",
+                "chuyển khoản",
+                "thẻ tín dụng",
+                "lừa đảo",
+                "nạp tiền",
+                "vay tiền",
+                "thanh toán",
+                "đơn hàng",
+                "trúng thưởng"
+            )
+        }
+    }
 
     // Flags to prevent repeated calls
     private var scamFlagTriggered = false
@@ -71,7 +89,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         scamFlagTriggered = false
 
         CoroutineScope(Dispatchers.IO).launch {
-            // 3) Load model first
+            // Load model first
             try {
                 modelManager.loadModel()
                 Log.d("AudioTranscriptRepo", "Speech-to-text model loaded successfully")
@@ -136,7 +154,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
 
             listeningJob = launch {
                 val buffer = ShortArray(minBuf)
-                val sampleWindow = 32000
+                val sampleWindow = 16000 * 2
                 val rollingBuffer = ShortArray(sampleWindow)
                 var filled = 0
 
@@ -147,8 +165,8 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                 while (isListening && isActive) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
-                        val framesPerSecond = 50
-                        val overlapFrames = framesPerSecond * 1 // 1 second overlap
+                        val framesPerSecond = 16000f / 320f
+                        val overlapFrames = (framesPerSecond * 1).toInt()
 
                         val spaceLeft = sampleWindow - filled
                         val copyCount = minOf(spaceLeft, read)
@@ -159,7 +177,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                             val result = withContext(Dispatchers.Default) {
                                 runCatching { modelManager.transcribeWithTokens(rollingBuffer.copyOf()) }
                                     .onFailure { Log.e("AudioTranscriptRepo", "Transcription error", it) }
-                                    .getOrDefault(TranscriptionResult("", emptyList()))
+                                    .getOrDefault(TranscriptionResult("", emptyList(), emptyArray()))
                             }
 
                             if (lastTokens == null) {
@@ -167,8 +185,26 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                                 _pendingChunk.postValue(lastPending)
                                 _stableTranscript.postValue(stableText)
                             } else {
-                                val newTokens = result.tokens.drop(overlapFrames)
-                                val newText = modelManager.ctcDecode(newTokens.toIntArray())
+                                val dropCount = findFirstBlankAfterOverlap(result.tokens, overlapFrames, modelManager.blankTokenId)
+                                val trimmedLogits = result.logitsArray.drop(dropCount).toTypedArray()
+
+                                // Use LM-enhanced beam search if available
+                                val newText = if (modelManager.languageModel != null) {
+                                    modelManager.ctcBeamSearchWithLM(
+                                        logits = trimmedLogits,
+                                        beamWidth = 20,
+                                        topK = 10,
+                                        blankId = modelManager.blankTokenId,
+                                        lmWeight = 0.5,
+                                        wordInsertionPenalty = -0.5
+                                    )
+                                } else {
+                                    modelManager.ctcBeamSearch(
+                                        logits = trimmedLogits,
+                                        beamWidth = 15,
+                                        topK = 8
+                                    )
+                                }
 
                                 if (lastPending.isNotBlank()) {
                                     stableText = (stableText + " " + lastPending).trim()
@@ -178,32 +214,38 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                                 lastPending = newText
                                 _pendingChunk.postValue(lastPending)
 
+                                // Check for scam keywords in the combined text
+                                val fullText = (stableText + " " + newText).trim()
                                 if (!scamFlagTriggered && containsScamKeyword(newText)) {
                                     scamFlagTriggered = true
-                                    stopListening()
 
                                     launch(Dispatchers.IO) {
                                         val response = sendToLLM((stableText + " " + newText).trim())
                                         if (response != null) {
                                             if (response.risk_level.equals("High", ignoreCase = true)) {
+                                                // Set the data first
                                                 globalStateManager.setScamResultData(
                                                     ScamResultData.ScamAnalysis(response)
                                                 )
+
+                                                // Small delay to ensure state propagation
+                                                delay(100)
+
+                                                // Then stop and notify
+                                                stopListening()
                                                 _scamDetected.postValue(true)
                                             } else {
                                                 scamFlagTriggered = false
-                                                startListening()
                                             }
                                         } else {
                                             scamFlagTriggered = false
-                                            startListening()
                                         }
                                     }
                                 }
                             }
 
                             lastTokens = result.tokens
-                            val overlap = sampleWindow / 2
+                            val overlap = 4800
                             System.arraycopy(rollingBuffer, overlap, rollingBuffer, 0, overlap)
                             filled = overlap
                         }
@@ -229,6 +271,15 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun findFirstBlankAfterOverlap(tokens: List<Int>, overlapFrames: Int, blankId: Int): Int {
+        for (i in overlapFrames until tokens.size) {
+            if (tokens[i] == blankId) {
+                return i + 1
+            }
+        }
+        return overlapFrames
+    }
+
     private suspend fun sendToLLM(conversation: String): ScamAnalysisResponse? {
         return try {
             ApiManager.scamDetectionApi.analyzeAudioTranscript(conversation)
@@ -238,9 +289,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         }
     }
 
-
     override fun resetScamDetection() {
         globalStateManager.clearScamResultData()
     }
-
 }

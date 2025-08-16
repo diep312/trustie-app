@@ -119,5 +119,7 @@ android {
 }
 dependencies {
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.animation)
+    implementation(libs.ui)
 }
 

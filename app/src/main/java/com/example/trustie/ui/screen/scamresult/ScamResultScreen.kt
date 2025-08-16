@@ -172,9 +172,11 @@ private fun WarningContent(
         verticalArrangement = Arrangement.Center
     ) {
         Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFDBD5E8) // your light color
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFDBD5E8))
                 .padding(16.dp)
         ) {
             Column(
@@ -238,9 +240,11 @@ private fun WarningContent(
 
         if (readableAnalysis.isNotEmpty() && readableAnalysis != "Không có thông tin phân tích") {
             Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFDBD5E8) // your light color
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFDBD5E8))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -263,9 +267,11 @@ private fun WarningContent(
 
         if (recommendations.isNotEmpty()) {
             Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFDBD5E8) // your light color
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFDBD5E8))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -276,14 +282,12 @@ private fun WarningContent(
                         color = Color(0xFF1976D2)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    recommendations.forEach { recommendation ->
-                        Text(
-                            text = "• $recommendation",
-                            fontSize = 14.sp,
-                            color = Color.Black,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
+                    Text(
+                        text = recommendations,
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
             }
         }
@@ -378,9 +382,11 @@ private fun SafeContent(
         verticalArrangement = Arrangement.Center
     ) {
         Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFDBD5E8) // your light color
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFDBD5E8))
                 .padding(16.dp)
         ) {
             Column(

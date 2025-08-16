@@ -26,6 +26,7 @@ import com.example.trustie.ui.components.FeatureCard
 import com.example.trustie.ui.components.NotificationButton
 import com.example.trustie.ui.components.ShieldIcon
 import com.example.trustie.data.model.FeatureItem
+import com.example.trustie.ui.components.ScamShieldBanner
 import com.example.trustie.ui.theme.TrustieTheme
 import com.example.trustie.ui.screen.home.HomeViewModel
 
@@ -140,7 +141,7 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier.weight(1.5f),
+                    modifier = Modifier.weight(1f),
                     text = "Chúc quý vị ngày an lành",
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Black,
@@ -148,82 +149,26 @@ fun HomeScreen(
                     lineHeight = 43.sp
                 )
 
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 NotificationButton(
-                    modifier = Modifier.weight(0.5f),
                     onClick = onNotificationClick,
-                    hasUnreadNotifications = true
+                    hasUnreadNotifications = false,
+                    modifier = Modifier, // no weight
+                    width = 96.dp,
+                    height = 84.dp
                 )
             }
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            Card(
+            ScamShieldBanner(
+                isEnabled = isAlertEnabled,
+                onToggle = { viewModel.toggleAlert() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(125.dp)
-                    .padding(bottom = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF005893),
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFF2E4A70))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                        ) {
-                            Text(
-                                text = "Khiên bảo vệ chống lừa đảo",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-//                            ShieldIcon(
-//                                modifier = Modifier.size(32.dp),
-//                                color = Color.White.copy(alpha = 0.8f)
-//                            )
-                                Button(
-                                    onClick = { viewModel.toggleAlert() },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isAlertEnabled) Color(0xFF4CAF50) else Color(0xFFFF9800)
-                                    ),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(36.dp)
-                                ) {
-                                    Text(
-                                        text = if (isAlertEnabled) "Đã bật" else "Bật ngay",
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+                    .padding(bottom = 16.dp)
+            )
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),

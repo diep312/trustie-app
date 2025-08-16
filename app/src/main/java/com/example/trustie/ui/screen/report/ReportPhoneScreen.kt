@@ -209,42 +209,25 @@ fun ReportPhoneScreen(
                     }
                 }
 
-                // Send Report Button
+                Spacer(modifier = Modifier.weight(1f))
+
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterEnd
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomEnd
                 ) {
-                    Card(
+                    FloatingActionButton(
                         onClick = { viewModel.submitReport() },
-                        modifier = Modifier.size(80.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3)),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(6.dp)
+                        containerColor = if (!phoneNumber.isEmpty() && selectedReason != null) Color(0xFF2196F3) else Color.Gray,
+                        contentColor = Color.White,
+                        modifier = Modifier.size(80.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Send,
-                                    contentDescription = "Send",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Gửi báo cáo",
-                                    fontSize = 10.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_send),
+                            contentDescription = "Send report",
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
 
@@ -283,7 +266,6 @@ fun ReportPhoneScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                Spacer(modifier = Modifier.height(50.dp))
             }
         }
 

@@ -155,6 +155,6 @@ fun ImageVerificationResponse.getReadableAnalysis(): String {
 // Extension function to get recommendations
 fun ImageVerificationResponse.getRecommendations(): String {
     val parsedAnalysis = llmAnalysis.getParsedAnalysis()
-    return parsedAnalysis?.recommendation ?: "Không có khuyến nghị gì"
+    return parsedAnalysis?.recommendation ?: llmAnalysis.recommendation ?: "Không có khuyến nghị gì"
 }
 

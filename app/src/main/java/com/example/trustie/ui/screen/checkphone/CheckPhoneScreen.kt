@@ -1,21 +1,25 @@
 package com.example.trustie.ui.screen.checkphone
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.trustie.R
 import com.example.trustie.ui.components.PhoneCheckResultCard
@@ -34,6 +38,9 @@ fun CheckPhoneScreen(
     val checkResult by viewModel.checkResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+
+    val context = LocalContext.current
+
 
     Log.d("CheckPhoneDebug", "CheckPhoneScreen recomposed")
 
@@ -115,30 +122,41 @@ fun CheckPhoneScreen(
 
                 // Error message
                 errorMessage?.let { error ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+
+                if (checkResult != null) {
+                    Dialog(
+                        onDismissRequest = { viewModel.clearResults() } // You'll add this function to ViewModel
                     ) {
-                        Text(
-                            text = error,
-                            color = Color(0xFFD32F2F),
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(24.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                PhoneCheckResultCard(result = checkResult!!)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = { viewModel.clearResults() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF2196F3),
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text(text = "Đóng", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
                     }
                 }
-
-                // Check result
-                checkResult?.let { result ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PhoneCheckResultCard(
-                        result = result,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

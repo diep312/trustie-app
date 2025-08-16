@@ -1,6 +1,7 @@
 package com.example.trustie.di
 
 import android.content.Context
+import com.example.trustie.data.local.lm.ArpaLanguageModel
 import com.example.trustie.data.local.wave2vec.OnnxWav2Vec2Manager
 import dagger.Module
 import dagger.Provides
@@ -13,6 +14,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SpeechModule {
+
+    @Provides
+    @Singleton
+    fun provideLanguageModel(@ApplicationContext context: Context): ArpaLanguageModel {
+        return ArpaLanguageModel(context)
+    }
 
     @Provides
     @Singleton

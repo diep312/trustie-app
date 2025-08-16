@@ -1,0 +1,125 @@
+# Tài khoản & Bảo mật
+tài khoản ngân hàng
+mật khẩu
+otp
+mã xác thực
+mã bảo mật
+cccd
+căn cước công dân
+cmnd
+chứng minh nhân dân
+
+# Giao dịch tài chính
+chuyển khoản
+chuyển tiền
+thẻ tín dụng
+thẻ atm
+nạp tiền
+rút tiền
+thanh toán
+phí
+tiền cọc
+đặt cọc
+hoàn tiền
+hoàn trả
+
+# Vay & Cho vay
+vay tiền
+vay tín chấp
+vay nhanh
+giải ngân
+hạn mức
+lãi suất
+nợ xấu
+xóa nợ
+
+# Giải thưởng & Khuyến mãi
+trúng thưởng
+quà tặng
+khuyến mãi
+ưu đãi
+giải thưởng
+may mắn
+trúng số
+voucher
+
+# Cơ quan & Tổ chức
+công an
+cảnh sát
+viện kiểm sát
+tòa án
+ngân hàng nhà nước
+bộ công an
+thuế
+hải quan
+
+# Đe dọa & Cảnh báo
+khóa tài khoản
+đóng băng
+phong tỏa
+vi phạm
+bị bắt
+truy nã
+lệnh bắt
+tạm giam
+khởi tố
+
+# Đầu tư & Tiền ảo
+đầu tư
+lợi nhuận
+sinh lời
+forex
+bitcoin
+tiền ảo
+tiền điện tử
+chứng khoán
+sàn giao dịch
+
+# Việc làm & Cộng tác viên
+việc làm tại nhà
+cộng tác viên
+làm thêm online
+thu nhập cao
+kiếm tiền online
+
+# Từ khóa lừa đảo trực tiếp
+lừa đảo
+giả mạo
+mạo danh
+chiếm đoạt
+
+# Đơn hàng & Giao dịch
+đơn hàng
+giao hàng
+ship cod
+kiện hàng
+bưu điện
+
+# Khẩn cấp
+khẩn cấp
+gấp
+ngay lập tức
+hết hạn
+sắp hết
+còn lại
+
+# Link & Xác thực
+link
+đường dẫn
+nhấn vào
+click
+xác nhận
+cập nhật
+nâng cấp
+
+# Số điện thoại & Liên hệ
+gọi lại
+liên hệ ngay
+nhắn tin
+zalo
+
+# Bảo hiểm & Y tế
+bảo hiểm y tế
+bảo hiểm xã hội
+viện phí
+khám bệnh

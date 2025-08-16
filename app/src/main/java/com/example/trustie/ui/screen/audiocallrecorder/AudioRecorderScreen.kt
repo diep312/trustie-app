@@ -32,23 +32,21 @@ fun AudioRecorderScreen(
     val stableTranscript by viewModel.stableTranscript.observeAsState("")
     val pendingChunk by viewModel.pendingChunk.observeAsState("")
     val scamDetected by viewModel.scamDetected.observeAsState(false)
-    val globalStateManager = GlobalStateManager()
+
+    val scamResultData by viewModel.globalStateManager.scamResultData.collectAsState()
 
     LaunchedEffect(Unit) {
-        Log.d("ImageVerificationScreen", "Screen entered, resetting to initial state")
+        Log.d("AudioRecorderScreen", "Screen entered, resetting to initial state")
         viewModel.resetScamDetection()
     }
 
-    LaunchedEffect(scamDetected) {
-        if (scamDetected) {
-            viewModel.getScamResultData()?.let { result ->
-                if (result is ScamResultData.ScamAnalysis) {
-                    onNavigateToScamResult(result.data)
-                }
-            }
-            viewModel.resetScamDetection()
+    LaunchedEffect(scamResultData) {
+        if (scamResultData is ScamResultData.ScamAnalysis) {
+            Log.d("AudioRecorderScreen", "Scam data detected, navigating to result screen")
+            onNavigateToScamResult((scamResultData as ScamResultData.ScamAnalysis).data)
         }
     }
+
 
     val displayText = buildAnnotatedString {
         if (stableTranscript.isEmpty()) {

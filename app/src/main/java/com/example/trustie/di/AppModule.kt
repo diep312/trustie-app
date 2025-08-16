@@ -14,6 +14,8 @@ import com.example.trustie.repository.reportrepo.ReportRepository
 import android.content.Context
 import com.example.trustie.repository.audiotranscriptrepo.AudioTranscriptRepository
 import com.example.trustie.repository.audiotranscriptrepo.AudioTranscriptRepositoryImpl
+import com.example.trustie.repository.alertrepo.AlertRepository
+import com.example.trustie.repository.alertrepo.AlertRepositoryImpl
 import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
@@ -56,6 +58,12 @@ abstract class AppModule {
     abstract fun bindAudioTranscriptRepository(
         audioTranscriptRepositoryimpl: AudioTranscriptRepositoryImpl
     ): AudioTranscriptRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAlertRepository(
+        alertRepositoryImpl: AlertRepositoryImpl
+    ): AlertRepository
 }
 
 @Module

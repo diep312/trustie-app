@@ -4,13 +4,19 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trustie.data.model.NotificationItem
-import kotlinx.coroutines.delay
+import com.example.trustie.repository.alertrepo.AlertRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class NotificationViewModel : ViewModel() {
+@HiltViewModel
+class NotificationViewModel @Inject constructor(
+    private val alertRepository: AlertRepository
+) : ViewModel() {
+
     private val _notifications = MutableStateFlow<List<NotificationItem>>(emptyList())
     val notifications: StateFlow<List<NotificationItem>> = _notifications.asStateFlow()
 
@@ -20,50 +26,60 @@ class NotificationViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // Remember last query so refresh can reuse it
+    private var lastUnreadOnly = false
+    private var lastLimit = 50
+    private var lastOffset = 0
+
     init {
         Log.d("NotificationDebug", "NotificationViewModel initialized")
         loadNotifications()
     }
 
-    private fun loadNotifications() {
+    fun loadNotifications(
+        unreadOnly: Boolean = lastUnreadOnly,
+        limit: Int = lastLimit,
+        offset: Int = lastOffset
+    ) {
         viewModelScope.launch {
-            Log.d("NotificationDebug", "loadNotifications called")
+            Log.d(
+                "NotificationDebug",
+                "loadNotifications called. unreadOnly=$unreadOnly, limit=$limit, offset=$offset"
+            )
             _isLoading.value = true
             _errorMessage.value = null
 
-            try {
-                // Mô phỏng API call
-                delay(1000)
+            lastUnreadOnly = unreadOnly
+            lastLimit = limit
+            lastOffset = offset
 
-                val mockNotifications = listOf(
-                    NotificationItem(
-                        id = "1",
-                        title = "Cảnh báo lừa đảo từ điện thoại người thân",
-                        phoneNumber = "09 123 456 78",
-                        time = "18:12",
-                        location = "Vietnam"
-                    ),
-                    NotificationItem(
-                        id = "2",
-                        title = "Cảnh báo lừa đảo từ điện thoại người thân",
-                        phoneNumber = "09 123 456 78",
-                        time = "18:12",
-                        location = "Vietnam"
-                    )
-                )
+            val result = alertRepository.getAllNotifications(
+                unreadOnly = unreadOnly,
+                limit = limit,
+                offset = offset
+            )
 
-                _notifications.value = mockNotifications
-                Log.d("NotificationDebug", "Notifications loaded successfully. Count: ${mockNotifications.size}")
-            } catch (e: Exception) {
-                _errorMessage.value = "Lỗi kết nối: ${e.message}"
-                Log.e("NotificationDebug", "Exception loading notifications: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
-            }
+            result
+                .onSuccess { list ->
+                    _notifications.value = list
+                    Log.d("NotificationDebug", "Notifications loaded successfully. Count: ${list.size}")
+                }
+                .onFailure { e ->
+                    _errorMessage.value = e.message ?: "Đã xảy ra lỗi."
+                    Log.e("NotificationDebug", "Failed to load notifications", e)
+                }
+
+            _isLoading.value = false
         }
     }
 
     fun refreshNotifications() {
-        loadNotifications()
+        // Reset offset to 0 for a true refresh
+        loadNotifications(lastUnreadOnly, lastLimit, offset = 0)
+    }
+
+    // Optional: for the Android system notification use-case
+    suspend fun getLatestForSystemNotification(): NotificationItem? {
+        return alertRepository.getLatestNotification().getOrNull()
     }
 }
