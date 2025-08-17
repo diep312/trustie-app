@@ -82,7 +82,7 @@ class ScamCheckService : Service() {
                 Log.e(TAG, "Error checking phone number", e)
                 withContext(Dispatchers.Main) {
                     // Show generic notification on error
-                    showCallAlertNotification(phoneNumber, "Unable to verify number", false)
+                    showCallAlertNotification(phoneNumber, "Đã không thể xác minh số điện thoại...", false, "❌TRUSTIE APP")
                 }
             } finally {
                 stopSelf()
@@ -98,38 +98,42 @@ class ScamCheckService : Service() {
 
         Log.d(TAG, "Phone check result - Found: $isFound, Flagged: $isFlagged, Risk: $riskLevel")
 
-        val isHighRisk = isFlagged && riskLevel >= 80
+        val isMediumRisk = riskLevel in 60..80
 
         when {
-            isHighRisk -> {
-                showCallAlertNotification(
-                    phoneNumber,
-                    "⚠️ Cảnh báo: Cuộc gọi lừa đảo mức độ NGHIÊM TRỌNG! Mức độ nguy hại: $riskLevel",
-                    true // full-screen overlay
-                )
-            }
-
             isFlagged -> {
                 showCallAlertNotification(
                     phoneNumber,
-                    "⚠️ Đã nhận diện cuộc gọi có khả năng lừa đảo. Mức độ nguy hại: $riskLevel",
-                    false // normal notification
+                    title = "🚨 CUỘC GỌI LỪA ĐẢO",
+                    message = "⚠️ Cảnh báo: Cuộc gọi lừa đảo mức độ NGHIÊM TRỌNG!\nMức độ nguy hại: $riskLevel.\nVui lòng lập tức kết thúc cuộc gọi và báo cho người thân.",
+                    isOverlay = true // full-screen overlay
+                )
+            }
+
+            isMediumRisk -> {
+                showCallAlertNotification(
+                    phoneNumber,
+                    title = "⚠️ CẢNH BÁO",
+                    message = "⚠️ Đã nhận diện cuộc gọi có khả năng lừa đảo. Mức độ nguy hại: $riskLevel.\nHãy hỏi rõ danh tính đối phương và tránh cung cấp thông tin cá nhân.",
+                    isOverlay = false // normal notification
                 )
             }
 
             !isFound -> {
                 showCallAlertNotification(
                     phoneNumber,
-                    "⚠️ Số này chưa có trong cơ sở dữ liệu. Ông/Bà hãy cẩn thận.",
-                    false // normal notification
+                    title = "⚠️ KHÔNG RÕ NGUỒN GỐC",
+                    message = "⚠️ Số này chưa có trong cơ sở dữ liệu. Ông/Bà hãy cẩn thận.\nKhuyến nghị không nghe quá lâu và kiểm tra thông tin người gọi.",
+                    isOverlay = false // normal notification
                 )
             }
 
             else -> {
                 showCallAlertNotification(
                     phoneNumber,
-                    "✅ Số điện thoại an toàn",
-                    false
+                    title = "✅ AN TOÀN",
+                    message = "✅ Số điện thoại an toàn.\nBạn có thể yên tâm giao tiếp như bình thường.",
+                    isOverlay = false
                 )
             }
         }
@@ -137,9 +141,9 @@ class ScamCheckService : Service() {
 
 
 
-    private fun showCallAlertNotification(phoneNumber: String, message: String, isHighRisk: Boolean) {
+    private fun showCallAlertNotification(phoneNumber: String, message: String, isOverlay: Boolean, title: String) {
         val overlayManager = OverlayNotificationManager(this)
-        overlayManager.showCallScreenOverlay(phoneNumber, message, isHighRisk)
+        overlayManager.showCallScreenOverlay(phoneNumber, message, isOverlay, title)
     }
     
     private fun createNotificationChannel() {

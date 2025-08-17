@@ -17,7 +17,7 @@ class HomeViewModel @Inject constructor(
     private val globalStateManager: GlobalStateManager
 ) : ViewModel() {
 
-    private val _isAlertEnabled = MutableStateFlow(false)
+    private val _isAlertEnabled = MutableStateFlow(true)
     val isAlertEnabled: StateFlow<Boolean> = _isAlertEnabled.asStateFlow()
 
     private val _showAlertDialog = MutableStateFlow(false)

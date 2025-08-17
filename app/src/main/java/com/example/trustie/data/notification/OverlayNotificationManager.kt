@@ -18,12 +18,7 @@ class OverlayNotificationManager(context: Context) : BaseNotificationManager(con
     }
 
 
-    fun showCallScreenOverlay(phoneNumber: String, message: String, isHighRisk: Boolean) {
-        if (!isHighRisk) {
-            // Don't show overlay for low/medium risk
-            return
-        }
-
+    fun showCallScreenOverlay(phoneNumber: String, message: String, isOverlay: Boolean, title: String = "Trustie") {
         if (!hasOverlayPermission()) {
             // If no overlay permission, fall back to a regular high-priority notification
             val callAlertManager = CallAlertNotificationManager(context)
@@ -31,9 +26,7 @@ class OverlayNotificationManager(context: Context) : BaseNotificationManager(con
             return
         }
 
-        val title = "🚨 CẢNH BÁO CUỘC GỌI NGUY HIỂM"
-        val warningMessage = "$phoneNumber\n$message\n\n" +
-                "📢 Ông/Bà hãy thận trọng! Không cung cấp thông tin cá nhân hoặc chuyển tiền."
+        val warningMessage = "Cuộc gọi tới $phoneNumber\n$message\n\n"
 
         val builder = createNotificationBuilder(CHANNEL_ID_HIGH_PRIORITY, title, warningMessage)
             .setPriority(NotificationCompat.PRIORITY_MAX)
