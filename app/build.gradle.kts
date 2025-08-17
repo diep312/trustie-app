@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.trustie"
-        minSdk = 26
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.2"
@@ -121,5 +121,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.animation)
     implementation(libs.ui)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.lifecycle)
 }
 

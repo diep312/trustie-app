@@ -11,6 +11,7 @@ import com.example.trustie.repository.ttsrepo.TextToSpeechRepositoryImpl
 import com.example.trustie.repository.connectrepo.ConnectionRepository
 import com.example.trustie.repository.callrepo.CallHistoryRepository
 import com.example.trustie.repository.reportrepo.ReportRepository
+import com.example.trustie.utils.AudioPlayer
 import android.content.Context
 import com.example.trustie.repository.audiotranscriptrepo.AudioTranscriptRepository
 import com.example.trustie.repository.audiotranscriptrepo.AudioTranscriptRepositoryImpl
@@ -98,5 +99,11 @@ object AppModuleObject {
     @Singleton
     fun provideReportRepository(): ReportRepository {
         return ReportRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAudioPlayer(): AudioPlayer {
+        return AudioPlayer()
     }
 } 
