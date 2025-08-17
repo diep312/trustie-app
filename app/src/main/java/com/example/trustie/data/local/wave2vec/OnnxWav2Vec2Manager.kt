@@ -54,18 +54,33 @@ class OnnxWav2Vec2Manager(
         // PCM16 → float32 [-1, 1]
         val floats = FloatArray(shorts.size) { i -> shorts[i] / 32768.0f }
         val maxAmp = floats.maxOf { kotlin.math.abs(it) }
+
+        // If audio is too quiet, amplify it
+        if (maxAmp < 0.1f && maxAmp > 0.001f) {
+            val ampFactor = 0.3f / maxAmp // Normalize to ~0.3 peak
+            for (i in floats.indices) {
+                floats[i] *= ampFactor
+            }
+            Log.d("ONNX", "Amplified quiet audio by factor: $ampFactor")
+        }
+
         Log.d("ONNX", "Audio length: ${floats.size} samples, max amplitude: $maxAmp")
 
-        // Mean/variance normalization (important for Wav2Vec2)
+        // Enhanced normalization
         val mean = floats.average().toFloat()
         var varSum = 0f
         for (i in floats.indices) {
-            val v = floats[i] - mean
-            floats[i] = v
-            varSum += v * v
+            floats[i] -= mean
+            varSum += floats[i] * floats[i]
         }
-        val std = kotlin.math.sqrt(varSum / floats.size).coerceAtLeast(1e-7f)
-        for (i in floats.indices) floats[i] /= std
+
+        // More robust variance calculation
+        val std = kotlin.math.sqrt(varSum / floats.size).coerceAtLeast(1e-5f)
+
+        // Apply normalization with clipping
+        for (i in floats.indices) {
+            floats[i] = (floats[i] / std).coerceIn(-5f, 5f)
+        }
 
         val shape = longArrayOf(1, floats.size.toLong())
         val inputName = session!!.inputNames.first()

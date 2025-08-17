@@ -1,19 +1,23 @@
 package com.example.trustie
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.trustie.data.GlobalStateManager
 import com.example.trustie.data.notification.CallDetectionManager
 import com.example.trustie.navigation.AppNavigation
 import com.example.trustie.ui.base.BaseAuthenticatedActivity
 import com.example.trustie.ui.screen.auth.AuthViewModel
 import com.example.trustie.utils.PermissionHelper
+import javax.inject.Inject
 
 class MainActivity : BaseAuthenticatedActivity() {
 
@@ -23,6 +27,10 @@ class MainActivity : BaseAuthenticatedActivity() {
 
     private var navController: NavHostController? = null
     private lateinit var callDetectionManager: CallDetectionManager
+
+
+    @Inject
+    lateinit var globalStateManager: GlobalStateManager
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -81,6 +89,7 @@ class MainActivity : BaseAuthenticatedActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     @Composable
     override fun MainContent(authViewModel: AuthViewModel) {
         navController = rememberNavController()
@@ -92,7 +101,7 @@ class MainActivity : BaseAuthenticatedActivity() {
 
         AppNavigation(
             navController = navController!!,
-            authViewModel = authViewModel
+            authViewModel = authViewModel,
         )
     }
 

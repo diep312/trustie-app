@@ -49,19 +49,44 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
         loadScamKeywords()
     }
 
+    // Flags to prevent repeated calls
+    private var scamFlagTriggered = false
+
+    // ADD: Audio processing helpers
+    private fun amplifyAudio(buffer: ShortArray, gain: Float = 2.5f): ShortArray {
+        val amplified = ShortArray(buffer.size)
+        for (i in buffer.indices) {
+            val amplifiedValue = (buffer[i] * gain).toInt()
+            amplified[i] = amplifiedValue.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        }
+        return amplified
+    }
+
+    private fun calculateRMS(buffer: ShortArray): Double {
+        var sum = 0.0
+        for (sample in buffer) {
+            sum += sample * sample
+        }
+        return kotlin.math.sqrt(sum / buffer.size)
+    }
+
+    private fun isSpeech(buffer: ShortArray, threshold: Double = 300.0): Boolean {
+        val rms = calculateRMS(buffer)
+        return rms > threshold
+    }
+
     private fun loadScamKeywords(): List<String> {
         return try {
-            context.assets.open("./scam_keywords.txt").use { inputStream ->
+            context.assets.open("scam_keywords.txt").use { inputStream ->
                 inputStream.bufferedReader().useLines { lines ->
                     lines
                         .map { it.trim() }
-                        .filter { it.isNotEmpty() && !it.startsWith("#") } // Skip empty lines and comments
+                        .filter { it.isNotEmpty() && !it.startsWith("#") }
                         .toList()
                 }
             }
         } catch (e: Exception) {
             Log.e("AudioTranscriptRepo", "Error loading scam keywords", e)
-            // Fallback to default keywords if file loading fails
             listOf(
                 "tài khoản ngân hàng",
                 "mật khẩu",
@@ -77,9 +102,6 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
             )
         }
     }
-
-    // Flags to prevent repeated calls
-    private var scamFlagTriggered = false
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startListening() {
@@ -119,10 +141,22 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                     .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                     .build()
 
+                // CHANGE 1: Use better audio source
+                val audioSource = when {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N -> {
+                        try {
+                            MediaRecorder.AudioSource.UNPROCESSED
+                        } catch (e: Exception) {
+                            MediaRecorder.AudioSource.VOICE_RECOGNITION
+                        }
+                    }
+                    else -> MediaRecorder.AudioSource.VOICE_RECOGNITION
+                }
+
                 audioRecord = AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.MIC)
+                    .setAudioSource(audioSource) // CHANGED from MIC
                     .setAudioFormat(audioFormat)
-                    .setBufferSizeInBytes(minBuf * 2)
+                    .setBufferSizeInBytes(minBuf * 4) // CHANGED: Increased buffer
                     .build()
             } catch (se: SecurityException) {
                 Log.e("AudioTranscriptRepo", "SecurityException creating AudioRecord", se)
@@ -162,18 +196,40 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                 var stableText = ""
                 var lastPending = ""
 
+                // ADD: Silence tracking
+                var silenceFrames = 0
+                val maxSilenceFrames = 10
+
                 while (isListening && isActive) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
+                        // CHANGE 2: Amplify audio
+                        val amplifiedBuffer = amplifyAudio(buffer, gain = 3.0f)
+
+                        // CHANGE 3: Skip silent frames
+                        if (!isSpeech(amplifiedBuffer)) {
+                            silenceFrames++
+                            if (silenceFrames > maxSilenceFrames) {
+                                delay(50)
+                                continue
+                            }
+                        } else {
+                            silenceFrames = 0
+                        }
+
                         val framesPerSecond = 16000f / 320f
                         val overlapFrames = (framesPerSecond * 1).toInt()
 
                         val spaceLeft = sampleWindow - filled
                         val copyCount = minOf(spaceLeft, read)
-                        System.arraycopy(buffer, 0, rollingBuffer, filled, copyCount)
+                        System.arraycopy(amplifiedBuffer, 0, rollingBuffer, filled, copyCount) // Use amplified buffer
                         filled += copyCount
 
                         if (filled >= sampleWindow) {
+                            // ADD: Log amplified amplitude
+                            val maxAmp = amplifiedBuffer.maxOf { kotlin.math.abs(it.toInt()).toFloat() } / 32768f
+                            Log.d("AudioTranscriptRepo", "Amplified max amplitude: $maxAmp, RMS: ${calculateRMS(amplifiedBuffer)}")
+
                             val result = withContext(Dispatchers.Default) {
                                 runCatching { modelManager.transcribeWithTokens(rollingBuffer.copyOf()) }
                                     .onFailure { Log.e("AudioTranscriptRepo", "Transcription error", it) }
@@ -223,15 +279,10 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                                         val response = sendToLLM((stableText + " " + newText).trim())
                                         if (response != null) {
                                             if (response.risk_level.equals("High", ignoreCase = true)) {
-                                                // Set the data first
                                                 globalStateManager.setScamResultData(
                                                     ScamResultData.ScamAnalysis(response)
                                                 )
-
-                                                // Small delay to ensure state propagation
                                                 delay(100)
-
-                                                // Then stop and notify
                                                 stopListening()
                                                 _scamDetected.postValue(true)
                                             } else {

@@ -38,6 +38,8 @@ class AuthViewModel @Inject constructor(
         checkAuthStatus()
     }
 
+    fun isUserElderly():Boolean { return globalStateManager.isUserElderly()}
+
     private fun checkAuthStatus() {
         viewModelScope.launch {
             _isLoading.value = true
