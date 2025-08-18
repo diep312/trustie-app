@@ -32,7 +32,9 @@ import com.example.trustie.ui.components.ScreenHeader
 import com.example.trustie.ui.theme.TrustieTheme
 import android.util.Log
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.window.Dialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +44,7 @@ fun ScamResultScreen(
 ) {
     // Get response from GlobalStateManager via ViewModel
     val currentResponse by viewModel.scamResultData.collectAsState()
-
+    val isTtsLoading by viewModel.isTtsLoading.collectAsState()
     val isSpeaking by viewModel.isSpeaking.collectAsState()
     val isAudioPlaying by remember { derivedStateOf { viewModel.isAudioPlaying() }}
     var isHighRisk by remember { mutableStateOf(false) }
@@ -120,6 +122,30 @@ fun ScamResultScreen(
                 title = "Kết quả",
                 onBackClick = handleBackClick
             )
+
+            if (isTtsLoading) {
+                Dialog(onDismissRequest = { /* disable dismiss */ }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.0f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White,
+                            tonalElevation = 4.dp,
+                        ) {
+                            Box(
+                                modifier = Modifier.size(100.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+                }
+            }
 
             if (isHighRisk) {
                 WarningContent(

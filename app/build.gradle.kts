@@ -123,5 +123,7 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.foundation)
 }
 

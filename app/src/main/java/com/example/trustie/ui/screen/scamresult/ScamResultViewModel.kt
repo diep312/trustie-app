@@ -220,15 +220,6 @@ class ScamResultViewModel @Inject constructor(
                     append("Đường link: ${urls.joinToString(", ")}. ")
                 }
             }
-
-            // Add final safety reminder based on risk level
-            append("Lời nhắc cuối cùng: ")
-            when (effectiveRiskLevel.uppercase()) {
-                "HIGH" -> append("Nội dung này có nguy cơ cao, hãy tránh xa và báo cáo ngay lập tức. ")
-                "MEDIUM" -> append("Hãy thận trọng với nội dung này và xác minh thông tin kỹ lưỡng. ")
-                "LOW" -> append("Nội dung này có vẻ an toàn, nhưng vẫn nên duy trì sự cảnh giác. ")
-                else -> append("Cần thêm thông tin để đánh giá chính xác mức độ rủi ro. ")
-            }
         }
     }
 
