@@ -49,6 +49,10 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
     private val _scamDetected = MutableLiveData<Boolean>()
     override val scamDetected: LiveData<Boolean> get() = _scamDetected
 
+
+    private var lastApiCallTimestamp: Long = 0L
+    private var scamKeywordCount: Int = 0
+
     private var audioRecord: AudioRecord? = null
     private var isListening = false
     private var listeningJob: Job? = null
@@ -57,7 +61,10 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
     private var recordingFile: File? = null
     private var audioFileOutput: FileOutputStream? = null
     private var recordingStartTime: Long = 0
-    private var maxRecordingDurationMs = 60_000L // 1 minute
+
+    private val baseIntervalMs = 60_000L
+
+    private val scamIntervalMs = 30_000L
 
     // FIXED: Use thread-safe collection and mutex for synchronization
     private val audioBuffer = CopyOnWriteArrayList<ShortArray>()
@@ -71,9 +78,11 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
     // Flags to prevent repeated calls
     private var scamFlagTriggered = false
     private var totalRecordingTimeMs: Long = 0
-    private val maxBufferSizeBeforeCompression = 50 // chunks before we need to compress
+    private val maxBufferSizeBeforeCompression = 200 // chunks before we need to compress
     private var compressionNeeded = false
+    private var intervalToCallApi = 60_000L
     private val maxTotalRecordingTimeMs = 300_000L // 5 minutes total
+
 
     // ADD: Audio processing helpers
     private fun amplifyAudio(buffer: ShortArray, gain: Float = 2.5f): ShortArray {
@@ -268,20 +277,16 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                         totalRecordingTimeMs = currentTime - recordingStartTime
 
                         // Check if we need file compression due to size
-                        if (audioBuffer.size >= maxBufferSizeBeforeCompression) {
-                            compressionNeeded = true
-                            Log.d("AudioTranscriptRepo", "Buffer size limit reached, will use compression")
-                        }
+//                        if (audioBuffer.size >= maxBufferSizeBeforeCompression) {
+//                            compressionNeeded = true
+//                            Log.d("AudioTranscriptRepo", "Buffer size limit reached, will use compression")
+//                        }
 
-                        // Check if we've been recording for 1 minute OR reached buffer limit
-                        if (totalRecordingTimeMs >= maxRecordingDurationMs || compressionNeeded) {
+                        if (totalRecordingTimeMs - lastApiCallTimestamp >= intervalToCallApi) {
                             Log.d("AudioTranscriptRepo", "Triggering API analysis - Time: ${totalRecordingTimeMs}ms, Buffer size: ${audioBuffer.size}")
+                            lastApiCallTimestamp = totalRecordingTimeMs
                             launch(Dispatchers.IO) {
                                 sendAudioToAPI(shouldContinueListening = true)
-                            }
-                            // Reset for next batch
-                            launch(Dispatchers.IO) {
-                                resetAudioBufferForContinuousMode()
                             }
                         }
 
@@ -354,16 +359,9 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                                 _pendingChunk.postValue(lastPending)
 
                                 // Check for scam keywords in the new text
-                                if (!scamFlagTriggered && containsScamKeyword(newText)) {
-                                    scamFlagTriggered = true
-                                    Log.d("AudioTranscriptRepo", "Scam keyword detected: $newText")
-
-                                    launch(Dispatchers.IO) {
-                                        sendAudioToAPI(shouldContinueListening = true)
-                                    }
-                                    launch(Dispatchers.IO) {
-                                        resetAudioBufferForContinuousMode()
-                                    }
+                                if (containsScamKeyword(newText)) {
+                                    scamKeywordCount++
+                                    intervalToCallApi = if (scamKeywordCount >= 2) scamIntervalMs else baseIntervalMs
                                 }
                             }
 
@@ -507,9 +505,7 @@ class AudioTranscriptRepositoryImpl @Inject constructor(
                         // Medium risk: Continue listening but increase monitoring
                         Log.d("AudioTranscriptRepo", "MEDIUM RISK detected - continuing monitoring with increased sensitivity")
                         if (shouldContinueListening) {
-                            // Reduce the time threshold for next check
-                            maxRecordingDurationMs = 30_000L // Check every 30 seconds instead of 60
-                            scamFlagTriggered = false // Allow immediate re-triggering
+                            scamFlagTriggered = false
                         }
                         // Don't stop listening, just continue
                     }
